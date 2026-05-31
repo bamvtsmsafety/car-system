@@ -5,7 +5,7 @@ export const ROLES = {
   safety_officer:      'Safety Officer',
   quality:             'Quality Officer',
   inspector:           'Inspector / Auditor',
-  stakeholder:         'Stakeholder / Auditee',
+  stakeholder:         'Auditee',
 };
 
 export const ROLE_DESCRIPTIONS = {

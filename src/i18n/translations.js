@@ -10,7 +10,7 @@ export const translations = {
     // ── Header ────────────────────────────────────────────────────
     header: {
       safetyTeam: 'Safety Team',
-      stakeholder: 'Stakeholder',
+      stakeholder: 'Auditee',
       logout: 'Logout',
       users: 'Users',
     },
@@ -71,7 +71,7 @@ export const translations = {
       selectFromUsers: 'Select Responsible Person(s)',
       orTypeManually: 'Enter manually',
       selectedCount: 'person(s) selected',
-      noStakeholders: 'No stakeholder users registered yet',
+      noStakeholders: 'No auditee users registered yet',
       responsiblePersons: 'Responsible Person(s)',
       fieldOrg: 'Organization / Department',
       fieldEmail: 'Email Address',
@@ -79,7 +79,7 @@ export const translations = {
       fieldDue: 'Response Due Date',
       btnCancel: 'Cancel',
       btnDraft: 'Save as Draft',
-      btnIssue: 'Issue CAR to Stakeholder',
+      btnIssue: 'Issue CAR to Auditee',
       editPageTitle: 'Edit CAR',
       editPageSubtitle: 'Update finding details and responsible party',
       btnSaveChanges: 'Save Changes',
@@ -218,7 +218,7 @@ export const translations = {
       demoAdmin: 'Admin',
       demoSafety: 'Safety Officer',
       demoInspector: 'Inspector',
-      demoStakeholder: 'Stakeholder',
+      demoStakeholder: 'Auditee',
       editProfile: 'Edit Profile',
       profileSaved: 'Profile updated successfully!',
       forgotPassword: 'Forgot password?',
@@ -241,7 +241,7 @@ export const translations = {
       safety_officer:      'Safety Officer',
       quality:             'Quality Officer',
       inspector:           'Inspector / Auditor',
-      stakeholder:         'Stakeholder / Auditee',
+      stakeholder:         'Auditee',
     },
 
     // ── User Management ───────────────────────────────────────────
@@ -348,7 +348,7 @@ export const translations = {
 
     header: {
       safetyTeam: 'ทีมความปลอดภัย',
-      stakeholder: 'ผู้มีส่วนได้ส่วนเสีย',
+      stakeholder: 'ผู้รับการตรวจสอบ',
       logout: 'ออกจากระบบ',
       users: 'ผู้ใช้',
     },
@@ -412,7 +412,10 @@ export const translations = {
       fieldDue: 'วันครบกำหนดตอบกลับ',
       btnCancel: 'ยกเลิก',
       btnDraft: 'บันทึกเป็นร่าง',
-      btnIssue: 'ออก CAR ให้ผู้มีส่วนได้ส่วนเสีย',
+      noStakeholders: 'ยังไม่มีผู้รับการตรวจสอบที่ลงทะเบียน',
+      selectedCount: 'คน ที่เลือก',
+      responsiblePersons: 'ผู้รับผิดชอบ (ผู้รับการตรวจสอบ)',
+      btnIssue: 'ออก CAR ให้ผู้รับการตรวจสอบ',
       editPageTitle: 'แก้ไข CAR',
       editPageSubtitle: 'อัปเดตรายละเอียดข้อค้นพบและผู้รับผิดชอบ',
       btnSaveChanges: 'บันทึกการเปลี่ยนแปลง',
@@ -544,7 +547,7 @@ export const translations = {
       demoAdmin: 'ผู้ดูแลระบบ',
       demoSafety: 'เจ้าหน้าที่ความปลอดภัย',
       demoInspector: 'ผู้ตรวจสอบ',
-      demoStakeholder: 'ผู้มีส่วนได้ส่วนเสีย',
+      demoStakeholder: 'ผู้รับการตรวจสอบ',
       editProfile: 'แก้ไขข้อมูลส่วนตัว',
       profileSaved: 'อัปเดตข้อมูลสำเร็จ!',
       forgotPassword: 'ลืมรหัสผ่าน?',
@@ -567,7 +570,7 @@ export const translations = {
       safety_officer:      'เจ้าหน้าที่ความปลอดภัย',
       quality:             'เจ้าหน้าที่คุณภาพ',
       inspector:           'ผู้ตรวจสอบ / ผู้ตรวจสอบบัญชี',
-      stakeholder:         'ผู้มีส่วนได้ส่วนเสีย',
+      stakeholder:         'ผู้รับการตรวจสอบ',
     },
 
     // ── User Management ───────────────────────────────────────────
@@ -612,7 +615,7 @@ export const translations = {
         safety_officer:      'สร้าง CAR, ตรวจสอบ CAP, ปิด CAR',
         quality:             'สร้างและออก CAR, ตรวจสอบและอนุมัติ CAP',
         inspector:           'สร้างและออก CAR',
-        stakeholder:         'ส่ง RCA/CAP และหลักฐานการดำเนินการ',
+        stakeholder:         'ส่ง RCA/CAP และหลักฐานการดำเนินการแก้ไข',
       },
       btnSave: 'บันทึก',
       btnCancel: 'ยกเลิก',
