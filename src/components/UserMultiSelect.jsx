@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X, Search } from 'lucide-react';
 
 /**
- * Multi-select dropdown for picking registered stakeholder users.
+ * Searchable multi-select dropdown for picking registered stakeholder users.
  *
  * Props
  * ─────
@@ -13,21 +13,43 @@ import { ChevronDown, X } from 'lucide-react';
  * inputCls          – Tailwind class string for the trigger button
  */
 export function UserMultiSelect({ stakeholderUsers, selected, onChange, t, inputCls }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [open, setOpen]       = useState(false);
+  const [query, setQuery]     = useState('');
+  const ref                   = useRef(null);
+  const searchRef             = useRef(null);
 
+  // Close on outside click
   useEffect(() => {
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+        setQuery('');
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Auto-focus search input when dropdown opens
+  useEffect(() => {
+    if (open) setTimeout(() => searchRef.current?.focus(), 30);
+    else setQuery('');
+  }, [open]);
+
   const toggle = (user) => {
     const exists = selected.some((u) => u.id === user.id);
     onChange(exists ? selected.filter((u) => u.id !== user.id) : [...selected, user]);
   };
+
+  // Filter by name, position, org
+  const q = query.toLowerCase();
+  const visible = q
+    ? stakeholderUsers.filter((u) =>
+        u.name.toLowerCase().includes(q) ||
+        (u.position || '').toLowerCase().includes(q) ||
+        (u.orgName || u.organization || '').toLowerCase().includes(q),
+      )
+    : stakeholderUsers;
 
   return (
     <div className="relative" ref={ref}>
@@ -47,39 +69,70 @@ export function UserMultiSelect({ stakeholderUsers, selected, onChange, t, input
         />
       </button>
 
-      {/* Dropdown list */}
+      {/* Dropdown */}
       {open && (
-        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
-          {stakeholderUsers.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-gray-400 italic">
-              {t('createCAR', 'noStakeholders')}
-            </p>
-          ) : (
-            stakeholderUsers.map((u) => {
-              const isSelected = selected.some((s) => s.id === u.id);
-              return (
-                <label
-                  key={u.id}
-                  className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${
-                    isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggle(u)}
-                    className="rounded border-gray-300 text-blue-600 shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800">{u.name}</p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {[u.position, u.orgName || u.organization].filter(Boolean).join(' · ')}
-                    </p>
-                  </div>
-                </label>
-              );
-            })
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {/* Search box */}
+          {stakeholderUsers.length > 0 && (
+            <div className="px-3 py-2 border-b border-gray-100">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                <input
+                  ref={searchRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Type name to search…"
+                  className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
           )}
+
+          {/* User list */}
+          <div className="max-h-52 overflow-y-auto">
+            {stakeholderUsers.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-gray-400 italic">
+                {t('createCAR', 'noStakeholders')}
+              </p>
+            ) : visible.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-gray-400 italic">No users match "{query}"</p>
+            ) : (
+              visible.map((u) => {
+                const isSelected = selected.some((s) => s.id === u.id);
+                return (
+                  <label
+                    key={u.id}
+                    className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${
+                      isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggle(u)}
+                      className="rounded border-gray-300 text-blue-600 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800">{u.name}</p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {[u.position, u.orgName || u.organization].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
