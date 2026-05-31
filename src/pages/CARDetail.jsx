@@ -6,6 +6,7 @@ import {
   History, ChevronDown, ChevronUp, Trash2
 } from 'lucide-react';
 import { useCARContext } from '../context/CARContext';
+import { useT } from '../context/LanguageContext';
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge';
 import { FileList, FileUpload } from '../components/FileUpload';
 import { CAR_STATUS, STATUS_LABELS } from '../utils/constants';
@@ -52,6 +53,7 @@ const Textarea = ({ value, onChange, rows = 4, placeholder }) => (
 // ── RCA / CAP submission form (stakeholder) ──────────────────────────────────
 function SubmitRCAForm({ car, onSubmit }) {
   const { currentUser } = useCARContext();
+  const t = useT();
   const [form, setForm] = useState({
     rootCauseAnalysis: car.rootCauseAnalysis || '',
     correctiveActionPlan: car.correctiveActionPlan || '',
@@ -63,9 +65,9 @@ function SubmitRCAForm({ car, onSubmit }) {
 
   const validate = () => {
     const e = {};
-    if (!form.rootCauseAnalysis.trim()) e.rca = 'Root cause analysis is required';
-    if (!form.correctiveActionPlan.trim()) e.cap = 'Corrective action plan is required';
-    if (!form.capTargetDate) e.date = 'Target completion date is required';
+    if (!form.rootCauseAnalysis.trim()) e.rca = t('detail', 'fieldRCA') + ' is required';
+    if (!form.correctiveActionPlan.trim()) e.cap = t('detail', 'fieldCAP') + ' is required';
+    if (!form.capTargetDate) e.date = t('detail', 'fieldTargetDate') + ' is required';
     return e;
   };
 
@@ -84,34 +86,34 @@ function SubmitRCAForm({ car, onSubmit }) {
         <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
           <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium">Previous submission was rejected</p>
+            <p className="font-medium">{t('detail', 'rcaRejectedTitle')}</p>
             {car.reviewComments && <p className="mt-1 text-red-600">{car.reviewComments}</p>}
-            <p className="mt-1 text-red-500">Please revise and resubmit.</p>
+            <p className="mt-1 text-red-500">{t('detail', 'rcaRejectedRevise')}</p>
           </div>
         </div>
       )}
       <div>
-        <label className={lbl}>Root Cause Analysis <span className="text-red-500">*</span></label>
+        <label className={lbl}>{t('detail', 'fieldRCA')} <span className="text-red-500">*</span></label>
         <Textarea
           rows={5}
           value={form.rootCauseAnalysis}
           onChange={(v) => setForm((p) => ({ ...p, rootCauseAnalysis: v }))}
-          placeholder="Describe the root cause(s) of the finding. Consider contributing factors, systemic issues, and why the issue occurred..."
+          placeholder={t('detail', 'fieldRCAPlaceholder')}
         />
         {errors.rca && <p className="mt-1 text-xs text-red-500">{errors.rca}</p>}
       </div>
       <div>
-        <label className={lbl}>Corrective Action Plan <span className="text-red-500">*</span></label>
+        <label className={lbl}>{t('detail', 'fieldCAP')} <span className="text-red-500">*</span></label>
         <Textarea
           rows={5}
           value={form.correctiveActionPlan}
           onChange={(v) => setForm((p) => ({ ...p, correctiveActionPlan: v }))}
-          placeholder="Describe the specific corrective actions to be taken, who is responsible, and how they will prevent recurrence..."
+          placeholder={t('detail', 'fieldCAPPlaceholder')}
         />
         {errors.cap && <p className="mt-1 text-xs text-red-500">{errors.cap}</p>}
       </div>
       <div>
-        <label className={lbl}>Target Completion Date <span className="text-red-500">*</span></label>
+        <label className={lbl}>{t('detail', 'fieldTargetDate')} <span className="text-red-500">*</span></label>
         <input
           type="date"
           value={form.capTargetDate}
@@ -121,23 +123,23 @@ function SubmitRCAForm({ car, onSubmit }) {
         {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
       </div>
       <div>
-        <label className={lbl}>Supporting Documents</label>
+        <label className={lbl}>{t('detail', 'fieldSupportingDocs')}</label>
         <FileUpload
           files={form.capAttachments}
           onChange={(files) => setForm((p) => ({ ...p, capAttachments: files }))}
-          label="Attach RCA report, action plan documents, or supporting evidence"
+          label={t('detail', 'fieldSupportingDocs')}
           maxMB={20}
         />
       </div>
       <div>
-        <label className={lbl}>Submitted By</label>
+        <label className={lbl}>{t('detail', 'fieldSubmittedBy')}</label>
         <input type="text" value={form.submittedBy} onChange={(e) => setForm((p) => ({ ...p, submittedBy: e.target.value }))} className={`${inp} w-auto`} />
       </div>
       <button
         onClick={handleSubmit}
         className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
       >
-        <Send className="w-4 h-4" /> Submit RCA & Corrective Action Plan
+        <Send className="w-4 h-4" /> {t('detail', 'btnSubmitRCA')}
       </button>
     </div>
   );
@@ -145,6 +147,7 @@ function SubmitRCAForm({ car, onSubmit }) {
 
 // ── CAP Review form (safety team) ─────────────────────────────────────────────
 function ReviewCAPForm({ car, onReview }) {
+  const t = useT();
   const [comments, setComments] = useState('');
   const [decision, setDecision] = useState(null);
 
@@ -161,26 +164,26 @@ function ReviewCAPForm({ car, onReview }) {
     <div className="space-y-4 mt-2">
       <div className="grid sm:grid-cols-2 gap-4 text-sm">
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Root Cause Analysis</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('detail', 'labelRCA')}</p>
           <p className="text-gray-800 whitespace-pre-wrap">{car.rootCauseAnalysis}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Corrective Action Plan</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('detail', 'labelCAP')}</p>
           <p className="text-gray-800 whitespace-pre-wrap">{car.correctiveActionPlan}</p>
           {car.capTargetDate && (
-            <p className="text-xs text-gray-500 mt-2">Target date: <strong>{fmtDate(car.capTargetDate)}</strong></p>
+            <p className="text-xs text-gray-500 mt-2">{t('detail', 'labelTarget')} <strong>{fmtDate(car.capTargetDate)}</strong></p>
           )}
         </div>
       </div>
       {car.capAttachments?.length > 0 && (
-        <FileList files={car.capAttachments} title="Submitted Attachments" />
+        <FileList files={car.capAttachments} title={t('detail', 'labelSubmitted')} />
       )}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Review Comments</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('detail', 'fieldReviewComments')}</label>
         <Textarea
           value={comments}
           onChange={setComments}
-          placeholder="Provide feedback or justification for your decision. Required if rejecting."
+          placeholder={t('detail', 'fieldReviewPlaceholder')}
           rows={3}
         />
       </div>
@@ -191,7 +194,7 @@ function ReviewCAPForm({ car, onReview }) {
             decision === false ? 'bg-red-600 text-white border-red-600' : 'border-red-300 text-red-600 hover:bg-red-50'
           }`}
         >
-          <XCircle className="w-4 h-4" /> Reject
+          <XCircle className="w-4 h-4" /> {t('detail', 'btnReject')}
         </button>
         <button
           onClick={() => handleDecide(true)}
@@ -199,14 +202,14 @@ function ReviewCAPForm({ car, onReview }) {
             decision === true ? 'bg-emerald-600 text-white border-emerald-600' : 'border-emerald-300 text-emerald-600 hover:bg-emerald-50'
           }`}
         >
-          <CheckCircle2 className="w-4 h-4" /> Approve
+          <CheckCircle2 className="w-4 h-4" /> {t('detail', 'btnApprove')}
         </button>
         {decision !== null && (
           <button
             onClick={handleConfirm}
             className="ml-auto flex items-center gap-2 bg-slate-700 hover:bg-slate-800 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            Confirm {decision ? 'Approval' : 'Rejection'}
+            {decision ? t('detail', 'btnConfirmApproval') : t('detail', 'btnConfirmRejection')}
           </button>
         )}
       </div>
@@ -217,6 +220,7 @@ function ReviewCAPForm({ car, onReview }) {
 // ── Final Action form (stakeholder) ──────────────────────────────────────────
 function FinalActionForm({ car, onSubmit }) {
   const { currentUser } = useCARContext();
+  const t = useT();
   const [form, setForm] = useState({
     finalActionTaken: '',
     finalActionDate: new Date().toISOString().split('T')[0],
@@ -227,8 +231,8 @@ function FinalActionForm({ car, onSubmit }) {
 
   const validate = () => {
     const e = {};
-    if (!form.finalActionTaken.trim()) e.action = 'Description of action taken is required';
-    if (!form.finalActionDate) e.date = 'Action date is required';
+    if (!form.finalActionTaken.trim()) e.action = t('detail', 'fieldFinalAction') + ' is required';
+    if (!form.finalActionDate) e.date = t('detail', 'fieldActionDate') + ' is required';
     return e;
   };
 
@@ -245,20 +249,20 @@ function FinalActionForm({ car, onSubmit }) {
     <div className="space-y-4 mt-2">
       <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm text-emerald-700">
         <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-        <p>Your Corrective Action Plan was approved. Please describe the final actions taken with supporting evidence.</p>
+        <p>{t('detail', 'finalApprovedNotice')}</p>
       </div>
       <div>
-        <label className={lbl}>Final Action Taken <span className="text-red-500">*</span></label>
+        <label className={lbl}>{t('detail', 'fieldFinalAction')} <span className="text-red-500">*</span></label>
         <Textarea
           rows={5}
           value={form.finalActionTaken}
           onChange={(v) => setForm((p) => ({ ...p, finalActionTaken: v }))}
-          placeholder="Describe all actions that were carried out to correct the finding, including dates, personnel involved, and verification steps..."
+          placeholder={t('detail', 'fieldFinalActionPlaceholder')}
         />
         {errors.action && <p className="mt-1 text-xs text-red-500">{errors.action}</p>}
       </div>
       <div>
-        <label className={lbl}>Action Completion Date <span className="text-red-500">*</span></label>
+        <label className={lbl}>{t('detail', 'fieldActionDate')} <span className="text-red-500">*</span></label>
         <input
           type="date"
           value={form.finalActionDate}
@@ -268,24 +272,24 @@ function FinalActionForm({ car, onSubmit }) {
         {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
       </div>
       <div>
-        <label className={lbl}>Evidence / Supporting Documents <span className="text-red-500">*</span></label>
+        <label className={lbl}>{t('detail', 'fieldEvidence')} <span className="text-red-500">*</span></label>
         <FileUpload
           files={form.finalActionAttachments}
           onChange={(files) => setForm((p) => ({ ...p, finalActionAttachments: files }))}
-          label="Attach photos, work orders, certificates, or any evidence of action taken"
+          label={t('detail', 'attachEvidenceLabel')}
           maxMB={20}
         />
-        <p className="text-xs text-amber-600 mt-1">At least one evidence document is strongly recommended</p>
+        <p className="text-xs text-amber-600 mt-1">{t('detail', 'evidenceHint')}</p>
       </div>
       <div>
-        <label className={lbl}>Submitted By</label>
+        <label className={lbl}>{t('detail', 'fieldSubmittedBy')}</label>
         <input type="text" value={form.submittedBy} onChange={(e) => setForm((p) => ({ ...p, submittedBy: e.target.value }))} className={`${inp} w-auto`} />
       </div>
       <button
         onClick={handleSubmit}
         className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
       >
-        <Send className="w-4 h-4" /> Submit Final Action Evidence
+        <Send className="w-4 h-4" /> {t('detail', 'btnSubmitFinal')}
       </button>
     </div>
   );
@@ -293,30 +297,31 @@ function FinalActionForm({ car, onSubmit }) {
 
 // ── Close CAR form (safety team) ─────────────────────────────────────────────
 function CloseCARForm({ car, onClose }) {
+  const t = useT();
   const [comments, setComments] = useState('');
 
   return (
     <div className="space-y-4 mt-2">
       <div className="grid sm:grid-cols-2 gap-4 text-sm">
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Final Action Taken</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('detail', 'fieldFinalAction')}</p>
           <p className="text-gray-800 whitespace-pre-wrap">{car.finalActionTaken}</p>
-          <p className="text-xs text-gray-500 mt-2">Action date: <strong>{fmtDate(car.finalActionDate)}</strong></p>
+          <p className="text-xs text-gray-500 mt-2">{t('detail', 'finalActionDate')} <strong>{fmtDate(car.finalActionDate)}</strong></p>
         </div>
         <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Evidence Submitted</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('detail', 'fieldEvidence')}</p>
           <FileList files={car.finalActionAttachments} />
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Closure Comments (optional)</label>
-        <Textarea value={comments} onChange={setComments} placeholder="Add any final notes or observations for closure..." rows={3} />
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('detail', 'fieldClosureComments')}</label>
+        <Textarea value={comments} onChange={setComments} placeholder={t('detail', 'fieldClosurePlaceholder')} rows={3} />
       </div>
       <button
         onClick={() => onClose(comments)}
         className="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
       >
-        <Lock className="w-4 h-4" /> Accept & Close CAR
+        <Lock className="w-4 h-4" /> {t('detail', 'btnClose')}
       </button>
     </div>
   );
@@ -358,6 +363,7 @@ function AuditTrail({ entries }) {
 // ── Main CARDetail ─────────────────────────────────────────────────────────────
 export function CARDetail({ carId, onNavigate }) {
   const { cars, role, issueCAR, submitRCA, reviewCAP, submitFinalAction, closeCAR, deleteCAR } = useCARContext();
+  const t = useT();
   const car = cars.find((c) => c.id === carId);
 
   if (!car) {
@@ -373,7 +379,7 @@ export function CARDetail({ carId, onNavigate }) {
   const overdue = car.dueDate && new Date(car.dueDate) < new Date() && car.status !== CAR_STATUS.CLOSED;
 
   const handleDelete = () => {
-    if (confirm(`Delete ${car.carNumber}? This cannot be undone.`)) {
+    if (confirm(`${t('detail', 'confirmDelete')} ${car.carNumber}${t('detail', 'deleteMsg')}`)) {
       deleteCAR(car.id);
       onNavigate('dashboard');
     }
@@ -393,7 +399,7 @@ export function CARDetail({ carId, onNavigate }) {
             <PriorityBadge priority={car.priority} />
             {overdue && (
               <span className="flex items-center gap-1 text-xs text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded">
-                <AlertTriangle className="w-3 h-3" /> Overdue
+                <AlertTriangle className="w-3 h-3" /> {t('dashboard', 'overdue')}
               </span>
             )}
           </div>
@@ -405,7 +411,7 @@ export function CARDetail({ carId, onNavigate }) {
               onClick={() => { issueCAR(car.id); }}
               className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
             >
-              <Send className="w-3.5 h-3.5" /> Issue
+              <Send className="w-3.5 h-3.5" /> {t('detail', 'btnIssue')}
             </button>
             <button onClick={handleDelete} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
               <Trash2 className="w-4 h-4" />
@@ -415,44 +421,44 @@ export function CARDetail({ carId, onNavigate }) {
       </div>
 
       {/* Finding Info */}
-      <Section title="1. Finding / Issue Information" color="bg-slate-700">
+      <Section title={t('detail', 'sec1')} color="bg-slate-700">
         <div className="grid sm:grid-cols-2 gap-4 mb-4">
-          <InfoRow icon={Hash} label="CAR Type" value={car.carType} />
-          <InfoRow icon={Calendar} label="Incident / Inspection Date" value={fmtDate(car.incidentDate)} />
-          <InfoRow icon={MapPin} label="Finding Location" value={car.findingLocation} />
-          <InfoRow icon={Hash} label="Reference Number" value={car.referenceNumber} />
-          <InfoRow icon={Calendar} label="Issued" value={fmt(car.issuedAt)} />
-          <InfoRow icon={Calendar} label="Response Due" value={fmtDate(car.dueDate)} valueClass={overdue ? 'text-red-600' : ''} />
+          <InfoRow icon={Hash} label={t('detail', 'fieldType')} value={car.carType} />
+          <InfoRow icon={Calendar} label={t('detail', 'fieldIncidentDate')} value={fmtDate(car.incidentDate)} />
+          <InfoRow icon={MapPin} label={t('detail', 'fieldLocation')} value={car.findingLocation} />
+          <InfoRow icon={Hash} label={t('detail', 'fieldRef')} value={car.referenceNumber} />
+          <InfoRow icon={Calendar} label={t('detail', 'fieldIssued')} value={fmt(car.issuedAt)} />
+          <InfoRow icon={Calendar} label={t('detail', 'fieldDue')} value={fmtDate(car.dueDate)} valueClass={overdue ? 'text-red-600' : ''} />
         </div>
         <div className="mb-4">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Finding / Issue Narrative</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('detail', 'fieldNarrative')}</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
             {car.findingNarrative}
           </div>
         </div>
         <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Attachments</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('detail', 'fieldAttachments')}</p>
           <FileList files={car.findingAttachments} />
         </div>
       </Section>
 
       {/* Responsible Party */}
-      <Section title="2. Responsible Party" color="bg-amber-600">
+      <Section title={t('detail', 'sec2')} color="bg-amber-600">
         <div className="grid sm:grid-cols-2 gap-4">
-          <InfoRow icon={User} label="Responsible Person" value={car.responsiblePerson} />
-          <InfoRow icon={Building2} label="Organization" value={car.responsibleOrganization} />
-          <InfoRow icon={User} label="Email" value={car.responsibleEmail || '—'} />
-          <InfoRow icon={User} label="CAR Issued By" value={car.issuedBy} />
+          <InfoRow icon={User} label={t('detail', 'fieldPerson')} value={car.responsiblePerson} />
+          <InfoRow icon={Building2} label={t('detail', 'fieldOrg')} value={car.responsibleOrganization} />
+          <InfoRow icon={User} label={t('detail', 'fieldEmail')} value={car.responsibleEmail || '—'} />
+          <InfoRow icon={User} label={t('detail', 'fieldIssuedBy')} value={car.issuedBy} />
         </div>
       </Section>
 
       {/* RCA / CAP Section */}
-      <Section title="3. Root Cause Analysis & Corrective Action Plan" color="bg-yellow-600">
+      <Section title={t('detail', 'sec3')} color="bg-yellow-600">
         {car.status === CAR_STATUS.DRAFT && (
-          <p className="text-sm text-gray-400 italic">CAR has not been issued yet.</p>
+          <p className="text-sm text-gray-400 italic">{t('detail', 'waitDraft')}</p>
         )}
         {car.status === CAR_STATUS.ISSUED && isSafety && (
-          <p className="text-sm text-gray-500 italic">Awaiting submission from responsible party.</p>
+          <p className="text-sm text-gray-500 italic">{t('detail', 'waitRCA')}</p>
         )}
         {car.status === CAR_STATUS.ISSUED && !isSafety && (
           <SubmitRCAForm car={car} onSubmit={(fd) => submitRCA(car.id, fd)} />
@@ -467,19 +473,19 @@ export function CARDetail({ carId, onNavigate }) {
           <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4 text-sm">
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Root Cause Analysis</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('detail', 'labelRCA')}</p>
                 <p className="text-gray-800 whitespace-pre-wrap">{car.rootCauseAnalysis}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Corrective Action Plan</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('detail', 'labelCAP')}</p>
                 <p className="text-gray-800 whitespace-pre-wrap">{car.correctiveActionPlan}</p>
-                <p className="text-xs text-gray-500 mt-2">Target: <strong>{fmtDate(car.capTargetDate)}</strong></p>
+                <p className="text-xs text-gray-500 mt-2">{t('detail', 'labelTarget')} <strong>{fmtDate(car.capTargetDate)}</strong></p>
               </div>
             </div>
-            {car.capAttachments?.length > 0 && <FileList files={car.capAttachments} title="CAP Attachments" />}
+            {car.capAttachments?.length > 0 && <FileList files={car.capAttachments} title={t('detail', 'labelSubmitted')} />}
             {car.reviewComments && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm">
-                <p className="text-xs font-medium text-emerald-700 mb-1">Review Comments by {car.reviewedBy}</p>
+                <p className="text-xs font-medium text-emerald-700 mb-1">{t('detail', 'reviewBy')} {car.reviewedBy}</p>
                 <p className="text-emerald-800">{car.reviewComments}</p>
               </div>
             )}
@@ -487,18 +493,18 @@ export function CARDetail({ carId, onNavigate }) {
         )}
         {car.status === CAR_STATUS.RCA_SUBMITTED && !isSafety && (
           <div className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            Your RCA/CAP has been submitted and is under review by the safety team.
+            {t('detail', 'rcaUnderReview')}
           </div>
         )}
       </Section>
 
       {/* Final Action Section */}
-      <Section title="4. Final Action Taken" color="bg-purple-700">
+      <Section title={t('detail', 'sec4')} color="bg-purple-700">
         {[CAR_STATUS.DRAFT, CAR_STATUS.ISSUED, CAR_STATUS.RCA_SUBMITTED, CAR_STATUS.RCA_REJECTED].includes(car.status) && (
-          <p className="text-sm text-gray-400 italic">Awaiting CAP approval before final action submission.</p>
+          <p className="text-sm text-gray-400 italic">{t('detail', 'waitApproval')}</p>
         )}
         {car.status === CAR_STATUS.RCA_APPROVED && isSafety && (
-          <p className="text-sm text-gray-500 italic">Awaiting final action submission from responsible party.</p>
+          <p className="text-sm text-gray-500 italic">{t('detail', 'waitFinalSafety')}</p>
         )}
         {car.status === CAR_STATUS.RCA_APPROVED && !isSafety && (
           <FinalActionForm car={car} onSubmit={(fd) => submitFinalAction(car.id, fd)} />
@@ -507,12 +513,12 @@ export function CARDetail({ carId, onNavigate }) {
           <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4 text-sm">
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Actions Taken</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('detail', 'fieldFinalAction')}</p>
                 <p className="text-gray-800 whitespace-pre-wrap">{car.finalActionTaken}</p>
-                <p className="text-xs text-gray-500 mt-2">Date: <strong>{fmtDate(car.finalActionDate)}</strong></p>
+                <p className="text-xs text-gray-500 mt-2">{t('detail', 'finalActionDate')} <strong>{fmtDate(car.finalActionDate)}</strong></p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Evidence Submitted</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('detail', 'fieldEvidence')}</p>
                 <FileList files={car.finalActionAttachments} />
               </div>
             </div>
@@ -521,16 +527,16 @@ export function CARDetail({ carId, onNavigate }) {
       </Section>
 
       {/* Closure Section */}
-      <Section title="5. CAR Closure" color="bg-emerald-700">
+      <Section title={t('detail', 'sec5')} color="bg-emerald-700">
         {car.status !== CAR_STATUS.ACTION_SUBMITTED && car.status !== CAR_STATUS.CLOSED && (
-          <p className="text-sm text-gray-400 italic">Available once final action evidence is submitted.</p>
+          <p className="text-sm text-gray-400 italic">{t('detail', 'waitAction')}</p>
         )}
         {car.status === CAR_STATUS.ACTION_SUBMITTED && isSafety && (
           <CloseCARForm car={car} onClose={(comments) => closeCAR(car.id, comments)} />
         )}
         {car.status === CAR_STATUS.ACTION_SUBMITTED && !isSafety && (
           <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            Final action submitted. Awaiting safety team review and closure.
+            {t('detail', 'waitFinalStakeholder')}
           </p>
         )}
         {car.status === CAR_STATUS.CLOSED && (
@@ -538,7 +544,7 @@ export function CARDetail({ carId, onNavigate }) {
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-emerald-800">CAR Closed</p>
-              <p className="text-xs text-emerald-600 mt-0.5">Closed by {car.closedBy} on {fmt(car.closedAt)}</p>
+              <p className="text-xs text-emerald-600 mt-0.5">{t('detail', 'closedBy')} {car.closedBy} on {fmt(car.closedAt)}</p>
               {car.closureComments && <p className="text-sm text-emerald-700 mt-2 italic">{car.closureComments}</p>}
             </div>
           </div>
@@ -546,11 +552,11 @@ export function CARDetail({ carId, onNavigate }) {
       </Section>
 
       {/* Audit Trail */}
-      <Section title="Audit Trail / History" color="bg-slate-600" defaultOpen={false}>
+      <Section title={t('detail', 'auditTitle')} color="bg-slate-600" defaultOpen={false}>
         {car.auditTrail?.length ? (
           <AuditTrail entries={car.auditTrail} />
         ) : (
-          <p className="text-sm text-gray-400 italic">No history yet.</p>
+          <p className="text-sm text-gray-400 italic">{t('audit', 'noHistory')}</p>
         )}
       </Section>
     </div>
