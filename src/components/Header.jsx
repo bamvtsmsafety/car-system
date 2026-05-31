@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { LogOut, User, Users, Shield, Lock, ChevronDown } from 'lucide-react';
+import { LogOut, User, Users, Shield, Lock, ChevronDown, UserCog } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { EditProfileModal } from './EditProfileModal';
 
 export function Header({ onNavigate }) {
   const { currentUser, logout } = useAuth();
@@ -10,6 +11,7 @@ export function Header({ onNavigate }) {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const menuRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -97,6 +99,14 @@ export function Header({ onNavigate }) {
                         <p className="text-sm font-medium text-gray-800 truncate">{currentUser.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{currentUser.email}</p>
                       </div>
+                      {/* Edit Profile */}
+                      <button
+                        onClick={() => { setShowEditProfile(true); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                      >
+                        <UserCog className="w-3.5 h-3.5" />
+                        {t('auth', 'editProfile')}
+                      </button>
                       {/* Change Password */}
                       <button
                         onClick={() => { setShowChangePw(true); setMenuOpen(false); }}
@@ -122,8 +132,9 @@ export function Header({ onNavigate }) {
         </div>
       </header>
 
-      {/* Change password modal */}
-      {showChangePw && <ChangePasswordModal onClose={() => setShowChangePw(false)} />}
+      {/* Modals */}
+      {showEditProfile && <EditProfileModal onClose={() => setShowEditProfile(false)} />}
+      {showChangePw    && <ChangePasswordModal onClose={() => setShowChangePw(false)} />}
     </>
   );
 }
