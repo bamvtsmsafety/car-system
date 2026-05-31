@@ -179,6 +179,16 @@ export const translations = {
       demoSafety: 'Safety Officer',
       demoInspector: 'Inspector',
       demoStakeholder: 'Stakeholder',
+      forgotPassword: 'Forgot password?',
+      forgotPasswordMsg: 'Contact your System Administrator to reset your password.',
+      changePassword: 'Change Password',
+      currentPassword: 'Current Password',
+      newPassword: 'New Password',
+      confirmPassword: 'Confirm New Password',
+      passwordTooShort: 'Password must be at least 6 characters',
+      passwordMismatch: 'Passwords do not match',
+      passwordChanged: 'Password changed successfully!',
+      wrongCurrentPassword: 'Current password is incorrect',
     },
 
     // ── Roles ─────────────────────────────────────────────────────
@@ -437,6 +447,16 @@ export const translations = {
       demoSafety: 'เจ้าหน้าที่ความปลอดภัย',
       demoInspector: 'ผู้ตรวจสอบ',
       demoStakeholder: 'ผู้มีส่วนได้ส่วนเสีย',
+      forgotPassword: 'ลืมรหัสผ่าน?',
+      forgotPasswordMsg: 'กรุณาติดต่อผู้ดูแลระบบ (Admin) เพื่อรีเซ็ตรหัสผ่านของคุณ',
+      changePassword: 'เปลี่ยนรหัสผ่าน',
+      currentPassword: 'รหัสผ่านปัจจุบัน',
+      newPassword: 'รหัสผ่านใหม่',
+      confirmPassword: 'ยืนยันรหัสผ่านใหม่',
+      passwordTooShort: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',
+      passwordMismatch: 'รหัสผ่านไม่ตรงกัน',
+      passwordChanged: 'เปลี่ยนรหัสผ่านสำเร็จ!',
+      wrongCurrentPassword: 'รหัสผ่านปัจจุบันไม่ถูกต้อง',
     },
 
     // ── Roles ─────────────────────────────────────────────────────

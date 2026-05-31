@@ -157,6 +157,16 @@ export function AuthProvider({ children }) {
     users.filter((u) => u.role === 'stakeholder' && u.isActive),
   [users]);
 
+  // ── Self-service password change ──────────────────────────────────────────────
+  const changePassword = useCallback(async (currentPasswordInput, newPasswordInput) => {
+    const data = loadData();
+    const user = data.users.find((u) => u.id === currentUser?.id);
+    if (!user) return { success: false, error: 'userNotFound' };
+    const valid = await verifyPassword(currentPasswordInput, user.passwordHash);
+    if (!valid) return { success: false, error: 'wrongCurrentPassword' };
+    return updateUser(currentUser.id, { password: newPasswordInput });
+  }, [currentUser, updateUser]);
+
   return (
     <AuthContext.Provider value={{
       currentUser,
@@ -164,6 +174,7 @@ export function AuthProvider({ children }) {
       loading,
       login,
       logout,
+      changePassword,
       createUser,
       updateUser,
       deleteUser,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Shield, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -11,6 +11,7 @@ export function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,6 +114,22 @@ export function LoginPage() {
             >
               {pending ? t('auth', 'signingIn') : t('auth', 'signInBtn')}
             </button>
+
+            {/* Forgot password */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowForgot((v) => !v)}
+                className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
+              >
+                {t('auth', 'forgotPassword')}
+              </button>
+              {showForgot && (
+                <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  {t('auth', 'forgotPasswordMsg')}
+                </p>
+              )}
+            </div>
           </form>
 
           {/* Demo credentials hint */}
