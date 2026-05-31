@@ -3,7 +3,8 @@ import { format } from 'date-fns';
 import {
   ArrowLeft, Send, CheckCircle2, XCircle, Lock, AlertTriangle,
   ClipboardList, User, Calendar, MapPin, Hash, Building2,
-  History, ChevronDown, ChevronUp, Trash2, Briefcase, Phone, Layers, Pencil
+  History, ChevronDown, ChevronUp, Trash2, Briefcase, Phone, Layers, Pencil,
+  Clock, CalendarCheck, CalendarX
 } from 'lucide-react';
 import { useCARContext } from '../context/CARContext';
 import { useT } from '../context/LanguageContext';
@@ -330,13 +331,17 @@ function CloseCARForm({ car, onClose }) {
 // ── Audit Trail ───────────────────────────────────────────────────────────────
 function AuditTrail({ entries }) {
   const colors = {
-    'CAR Created': 'bg-slate-500',
-    'CAR Issued': 'bg-blue-500',
-    'RCA/CAP Submitted': 'bg-yellow-500',
-    'CAP Approved': 'bg-emerald-500',
-    'CAP Rejected': 'bg-red-500',
-    'Final Action Submitted': 'bg-purple-500',
-    'CAR Closed': 'bg-emerald-700',
+    'CAR Created':           'bg-slate-500',
+    'CAR Issued':            'bg-blue-500',
+    'CAR Updated':           'bg-sky-400',
+    'RCA/CAP Submitted':     'bg-yellow-500',
+    'CAP Approved':          'bg-emerald-500',
+    'CAP Rejected':          'bg-red-500',
+    'Final Action Submitted':'bg-purple-500',
+    'CAR Closed':            'bg-emerald-700',
+    'Extension Requested':   'bg-orange-400',
+    'Extension Approved':    'bg-teal-500',
+    'Extension Rejected':    'bg-rose-500',
   };
   return (
     <div className="relative pl-5">
@@ -360,9 +365,130 @@ function AuditTrail({ entries }) {
   );
 }
 
+// ── Extension: request form (stakeholder) ────────────────────────────────────
+function RequestExtensionForm({ car, onSubmit }) {
+  const t = useT();
+  const [form, setForm] = useState({ reason: '', proposedDate: '' });
+  const [errors, setErrors] = useState({});
+  const inp = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400';
+  const lbl = 'block text-sm font-medium text-gray-700 mb-1';
+
+  const handleSubmit = () => {
+    const e = {};
+    if (!form.reason.trim()) e.reason = t('extension', 'fieldReason') + ' is required';
+    if (!form.proposedDate) e.proposedDate = t('extension', 'fieldProposedDate') + ' is required';
+    if (form.proposedDate && form.proposedDate <= (car.dueDate || '')) {
+      e.proposedDate = 'Proposed date must be after the current due date';
+    }
+    if (Object.keys(e).length) { setErrors(e); return; }
+    onSubmit(form);
+  };
+
+  return (
+    <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
+      <p className="text-sm font-medium text-gray-700">{t('extension', 'btnRequest')}</p>
+      <p className="text-xs text-gray-500">
+        {t('extension', 'currentDue')}: <strong>{fmtDate(car.dueDate)}</strong>
+      </p>
+      <div>
+        <label className={lbl}>{t('extension', 'fieldReason')} <span className="text-red-500">*</span></label>
+        <textarea
+          rows={3}
+          value={form.reason}
+          onChange={(e) => setForm((p) => ({ ...p, reason: e.target.value }))}
+          placeholder={t('extension', 'fieldReasonPlaceholder')}
+          className={`${inp} resize-none`}
+        />
+        {errors.reason && <p className="mt-1 text-xs text-red-500">{errors.reason}</p>}
+      </div>
+      <div>
+        <label className={lbl}>{t('extension', 'fieldProposedDate')} <span className="text-red-500">*</span></label>
+        <input
+          type="date"
+          value={form.proposedDate}
+          min={car.dueDate || undefined}
+          onChange={(e) => setForm((p) => ({ ...p, proposedDate: e.target.value }))}
+          className={inp}
+        />
+        {errors.proposedDate && <p className="mt-1 text-xs text-red-500">{errors.proposedDate}</p>}
+      </div>
+      <button
+        onClick={handleSubmit}
+        className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+      >
+        <Clock className="w-4 h-4" /> {t('extension', 'btnSubmit')}
+      </button>
+    </div>
+  );
+}
+
+// ── Extension: review form (safety team / canApprove) ────────────────────────
+function ReviewExtensionForm({ req, onReview }) {
+  const t = useT();
+  const [comments, setComments] = useState('');
+  const [confirm, setConfirm] = useState(null); // 'approve' | 'reject'
+  const inp = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400';
+
+  if (confirm) {
+    const isApprove = confirm === 'approve';
+    return (
+      <div className={`rounded-lg border p-4 space-y-3 ${isApprove ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+        <p className={`text-sm font-medium ${isApprove ? 'text-emerald-800' : 'text-red-800'}`}>
+          {isApprove
+            ? `${t('extension', 'btnConfirmApprove')} ${fmtDate(req.proposedDate)}`
+            : t('extension', 'btnConfirmReject')}
+        </p>
+        <textarea
+          rows={2}
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          placeholder={t('extension', 'reviewCommentsPlaceholder')}
+          className={`${inp} resize-none`}
+        />
+        <div className="flex gap-2">
+          <button onClick={() => setConfirm(null)}
+            className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={() => onReview(req.id, isApprove, comments)}
+            className={`px-4 py-1.5 text-sm text-white rounded-lg transition-colors ${isApprove ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}
+          >
+            {isApprove ? t('extension', 'btnApprove') : t('extension', 'btnReject')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+      <p className="text-sm font-semibold text-amber-800 flex items-center gap-2">
+        <Clock className="w-4 h-4" /> {t('extension', 'pending')}
+      </p>
+      <div className="grid sm:grid-cols-2 gap-2 text-xs text-amber-700 bg-white/60 rounded p-3 border border-amber-100">
+        <span>{t('extension', 'requestedBy')}: <strong>{req.requestedBy}</strong></span>
+        <span>{t('extension', 'proposedDate')}: <strong>{fmtDate(req.proposedDate)}</strong></span>
+        <span className="sm:col-span-2">{t('extension', 'reason')}: {req.reason}</span>
+      </div>
+      <div className="flex gap-2">
+        <button onClick={() => setConfirm('reject')}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-200 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+          <CalendarX className="w-3.5 h-3.5" /> {t('extension', 'btnReject')}
+        </button>
+        <button onClick={() => setConfirm('approve')}
+          className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
+          <CalendarCheck className="w-3.5 h-3.5" /> {t('extension', 'btnApprove')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main CARDetail ─────────────────────────────────────────────────────────────
 export function CARDetail({ carId, onNavigate }) {
-  const { cars, role, issueCAR, submitRCA, reviewCAP, submitFinalAction, closeCAR, deleteCAR } = useCARContext();
+  const { cars, role, canApprove, issueCAR, submitRCA, reviewCAP, submitFinalAction, closeCAR,
+          requestExtension, reviewExtension, deleteCAR } = useCARContext();
   const t = useT();
   const car = cars.find((c) => c.id === carId);
 
@@ -445,7 +571,20 @@ export function CARDetail({ carId, onNavigate }) {
           <InfoRow icon={MapPin} label={t('detail', 'fieldLocation')} value={car.findingLocation} />
           <InfoRow icon={Hash} label={t('detail', 'fieldRef')} value={car.referenceNumber} />
           <InfoRow icon={Calendar} label={t('detail', 'fieldIssued')} value={fmt(car.issuedAt)} />
-          <InfoRow icon={Calendar} label={t('detail', 'fieldDue')} value={fmtDate(car.dueDate)} valueClass={overdue ? 'text-red-600' : ''} />
+          <InfoRow
+            icon={Calendar}
+            label={t('detail', 'fieldDue')}
+            value={
+              <span className="flex items-center gap-1.5">
+                <span className={overdue ? 'text-red-600 font-medium' : ''}>{fmtDate(car.dueDate)}</span>
+                {car.extensionRequests?.some((r) => r.status === 'approved') && (
+                  <span className="text-xs bg-teal-100 text-teal-700 border border-teal-300 px-1.5 py-0.5 rounded-full font-medium">
+                    {t('extension', 'extended')}
+                  </span>
+                )}
+              </span>
+            }
+          />
         </div>
         <div className="mb-4">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('detail', 'fieldNarrative')}</p>
@@ -493,6 +632,85 @@ export function CARDetail({ carId, onNavigate }) {
         </div>
       </Section>
 
+      {/* ── Extension Request Section ── */}
+      {(() => {
+        const extensionRequests = car.extensionRequests || [];
+        const pendingReq = extensionRequests.find((r) => r.status === 'pending');
+        const history = extensionRequests.filter((r) => r.status !== 'pending');
+        // Stakeholder can request when actively working and no pending request
+        const canRequest = !isSafety &&
+          [CAR_STATUS.ISSUED, CAR_STATUS.RCA_REJECTED, CAR_STATUS.RCA_APPROVED].includes(car.status) &&
+          !pendingReq;
+        const showSection = canRequest || pendingReq || history.length > 0;
+        if (!showSection) return null;
+        return (
+          <Section title={t('extension', 'sectionTitle')} color="bg-orange-600" defaultOpen={!!pendingReq}>
+            <div className="space-y-4">
+              {/* Pending — stakeholder sees "under review" */}
+              {pendingReq && !isSafety && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-1">
+                  <p className="text-sm font-medium text-amber-800 flex items-center gap-2">
+                    <Clock className="w-4 h-4" /> {t('extension', 'pending')}
+                  </p>
+                  <p className="text-xs text-amber-600">{t('extension', 'pendingDesc')}</p>
+                  <div className="mt-2 text-xs text-amber-700 space-y-0.5">
+                    <p>{t('extension', 'proposedDate')}: <strong>{fmtDate(pendingReq.proposedDate)}</strong></p>
+                    <p>{t('extension', 'reason')}: {pendingReq.reason}</p>
+                  </div>
+                </div>
+              )}
+              {/* Pending — safety team reviews */}
+              {pendingReq && isSafety && canApprove && (
+                <ReviewExtensionForm
+                  req={pendingReq}
+                  onReview={(reqId, approved, comments) => reviewExtension(car.id, reqId, approved, comments)}
+                />
+              )}
+              {pendingReq && isSafety && !canApprove && (
+                <p className="text-sm text-gray-400 italic">An extension request is pending approval.</p>
+              )}
+              {/* Request form — stakeholder */}
+              {canRequest && (
+                <RequestExtensionForm
+                  car={car}
+                  onSubmit={(data) => requestExtension(car.id, data)}
+                />
+              )}
+              {/* History */}
+              {history.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    {t('extension', 'history')}
+                  </p>
+                  <div className="space-y-2">
+                    {[...history].reverse().map((r) => {
+                      const approved = r.status === 'approved';
+                      return (
+                        <div key={r.id} className={`rounded-lg p-3 text-xs border ${approved ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`font-semibold ${approved ? 'text-emerald-700' : 'text-red-700'}`}>
+                              {approved ? t('extension', 'approved') : t('extension', 'rejected')}
+                            </span>
+                            <span className="text-gray-400">{fmt(r.reviewedAt)}</span>
+                          </div>
+                          <p className="text-gray-600">
+                            {t('extension', 'proposedDate')}: {fmtDate(r.proposedDate)} ·{' '}
+                            {t('extension', 'requestedBy')}: {r.requestedBy}
+                          </p>
+                          {r.reviewComments && (
+                            <p className="mt-1 italic text-gray-500">{r.reviewComments}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Section>
+        );
+      })()}
+
       {/* RCA / CAP Section */}
       <Section title={t('detail', 'sec3')} color="bg-yellow-600">
         {car.status === CAR_STATUS.DRAFT && (
@@ -507,8 +725,11 @@ export function CARDetail({ carId, onNavigate }) {
         {(car.status === CAR_STATUS.RCA_REJECTED) && !isSafety && (
           <SubmitRCAForm car={car} onSubmit={(fd) => submitRCA(car.id, fd)} />
         )}
-        {car.status === CAR_STATUS.RCA_SUBMITTED && isSafety && (
+        {car.status === CAR_STATUS.RCA_SUBMITTED && isSafety && canApprove && (
           <ReviewCAPForm car={car} onReview={(approved, comments) => reviewCAP(car.id, approved, comments)} />
+        )}
+        {car.status === CAR_STATUS.RCA_SUBMITTED && isSafety && !canApprove && (
+          <p className="text-sm text-gray-500 italic">{t('detail', 'waitRCA')}</p>
         )}
         {[CAR_STATUS.RCA_APPROVED, CAR_STATUS.ACTION_SUBMITTED, CAR_STATUS.CLOSED].includes(car.status) && (
           <div className="space-y-4">
@@ -572,8 +793,11 @@ export function CARDetail({ carId, onNavigate }) {
         {car.status !== CAR_STATUS.ACTION_SUBMITTED && car.status !== CAR_STATUS.CLOSED && (
           <p className="text-sm text-gray-400 italic">{t('detail', 'waitAction')}</p>
         )}
-        {car.status === CAR_STATUS.ACTION_SUBMITTED && isSafety && (
+        {car.status === CAR_STATUS.ACTION_SUBMITTED && isSafety && canApprove && (
           <CloseCARForm car={car} onClose={(comments) => closeCAR(car.id, comments)} />
+        )}
+        {car.status === CAR_STATUS.ACTION_SUBMITTED && isSafety && !canApprove && (
+          <p className="text-sm text-gray-500 italic">{t('detail', 'waitAction')}</p>
         )}
         {car.status === CAR_STATUS.ACTION_SUBMITTED && !isSafety && (
           <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">

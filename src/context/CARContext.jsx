@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { loadData, saveData } from '../utils/storage';
 import { CAR_STATUS } from '../utils/constants';
 import { useAuth } from './AuthContext';
-import { isSafetyTeam } from '../utils/auth';
+import { isSafetyTeam, canApproveCAP } from '../utils/auth';
 
 const CARContext = createContext(null);
 
@@ -33,6 +33,10 @@ export function CARProvider({ children }) {
   const role = authUser
     ? isSafetyTeam(authUser.roles || authUser.role) ? 'safety' : 'stakeholder'
     : null;
+  // Can review CAP, approve/reject extensions, close CARs (excludes inspector-only)
+  const canApprove = authUser
+    ? canApproveCAP(authUser.roles || authUser.role)
+    : false;
   const currentUserName = authUser?.name || '';
 
   // Only manage cars + nextSeq in state; never overwrite users written by AuthContext
@@ -226,6 +230,57 @@ export function CARProvider({ children }) {
     }));
   }, [currentUserName]);
 
+  // ── Extension request ─────────────────────────────────────────────────────────
+  const requestExtension = useCallback((carId, { reason, proposedDate }) => {
+    setData((prev) => ({
+      ...prev,
+      cars: prev.cars.map((c) => {
+        if (c.id !== carId) return c;
+        const req = {
+          id: uuidv4(),
+          requestedAt: new Date().toISOString(),
+          requestedBy: currentUserName,
+          reason,
+          proposedDate,
+          status: 'pending',
+          reviewedAt: null,
+          reviewedBy: '',
+          reviewComments: '',
+        };
+        const updated = { ...c, extensionRequests: [...(c.extensionRequests || []), req] };
+        return addAuditEntry(updated, 'Extension Requested', currentUserName,
+          `Requested extension to ${proposedDate} — ${reason}`);
+      }),
+    }));
+  }, [currentUserName]);
+
+  const reviewExtension = useCallback((carId, requestId, approved, reviewComments) => {
+    setData((prev) => ({
+      ...prev,
+      cars: prev.cars.map((c) => {
+        if (c.id !== carId) return c;
+        const updatedRequests = (c.extensionRequests || []).map((r) =>
+          r.id !== requestId ? r : {
+            ...r,
+            status: approved ? 'approved' : 'rejected',
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: currentUserName,
+            reviewComments,
+          },
+        );
+        const approvedReq = updatedRequests.find((r) => r.id === requestId && r.status === 'approved');
+        const updated = {
+          ...c,
+          extensionRequests: updatedRequests,
+          dueDate: approvedReq ? approvedReq.proposedDate : c.dueDate,
+        };
+        const action = approved ? 'Extension Approved' : 'Extension Rejected';
+        return addAuditEntry(updated, action, currentUserName,
+          reviewComments || (approved ? `Due date extended to ${approvedReq?.proposedDate}` : 'Extension rejected'));
+      }),
+    }));
+  }, [currentUserName]);
+
   const deleteCAR = useCallback((carId) => {
     setData((prev) => ({ ...prev, cars: prev.cars.filter((c) => c.id !== carId) }));
   }, []);
@@ -234,6 +289,7 @@ export function CARProvider({ children }) {
     <CARContext.Provider value={{
       cars: data.cars,
       role,
+      canApprove,
       currentUser: currentUserName,  // keep as string for backward compat
       createCAR,
       updateCAR,
@@ -242,6 +298,8 @@ export function CARProvider({ children }) {
       reviewCAP,
       submitFinalAction,
       closeCAR,
+      requestExtension,
+      reviewExtension,
       deleteCAR,
     }}>
       {children}

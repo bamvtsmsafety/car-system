@@ -173,6 +173,34 @@ export const translations = {
       deleteMsg: '? This cannot be undone.',
     },
 
+    // ── Extension Request ─────────────────────────────────────────
+    extension: {
+      sectionTitle: 'Due Date Extension',
+      btnRequest: 'Request Due Date Extension',
+      fieldReason: 'Reason for Extension',
+      fieldReasonPlaceholder: 'Explain why additional time is needed and what actions have been taken so far...',
+      fieldProposedDate: 'Proposed New Due Date',
+      currentDue: 'Current due date',
+      btnSubmit: 'Submit Request',
+      pending: 'Extension Request — Pending Review',
+      pendingDesc: 'Your request is under review by the safety team.',
+      approved: 'Extension Approved',
+      rejected: 'Extension Rejected',
+      noRequests: 'No extension requests have been made.',
+      requestedBy: 'Requested by',
+      proposedDate: 'Proposed date',
+      reason: 'Reason',
+      reviewComments: 'Review Comments',
+      reviewCommentsPlaceholder: 'Provide feedback or justification...',
+      btnApprove: 'Approve Extension',
+      btnReject: 'Reject',
+      btnConfirmApprove: 'Confirm — Extend to',
+      btnConfirmReject: 'Confirm Rejection',
+      extended: 'Extended',
+      history: 'Extension History',
+      reviewedBy: 'Reviewed by',
+    },
+
     // ── Auth / Login ──────────────────────────────────────────────
     auth: {
       signIn: 'Sign In',
@@ -207,10 +235,13 @@ export const translations = {
 
     // ── Roles ─────────────────────────────────────────────────────
     roles: {
-      admin: 'Admin',
-      safety_officer: 'Safety Officer',
-      inspector: 'Inspector / Auditor',
-      stakeholder: 'Stakeholder / Auditee',
+      admin:               'Admin',
+      accountable_manager: 'Accountable Manager',
+      safety_manager:      'Safety Manager',
+      safety_officer:      'Safety Officer',
+      quality:             'Quality Officer',
+      inspector:           'Inspector / Auditor',
+      stakeholder:         'Stakeholder / Auditee',
     },
 
     // ── User Management ───────────────────────────────────────────
@@ -249,10 +280,13 @@ export const translations = {
       fieldRoles: 'Role Assignments',
       roleAtLeastOne: 'Assign at least one role',
       roleDescriptions: {
-        admin:          'Full access + User Management',
-        safety_officer: 'Create CARs, Review CAP, Close CARs',
-        inspector:      'Create & Issue CARs',
-        stakeholder:    'Submit RCA/CAP & Final Evidence',
+        admin:               'Full system access + User Management',
+        accountable_manager: 'Approve CARs, extension requests, and closures',
+        safety_manager:      'Approve CAP, extension requests, and close CARs',
+        safety_officer:      'Create CARs, Review CAP, Close CARs',
+        quality:             'Create & Issue CARs, Review & Approve CAP',
+        inspector:           'Create & Issue CARs',
+        stakeholder:         'Submit RCA/CAP & Final Action Evidence',
       },
       btnSave: 'Save',
       btnCancel: 'Cancel',
@@ -465,6 +499,34 @@ export const translations = {
       deleteMsg: '? ไม่สามารถยกเลิกได้',
     },
 
+    // ── Extension Request ─────────────────────────────────────────
+    extension: {
+      sectionTitle: 'การขอขยายเวลา',
+      btnRequest: 'ขอขยายวันครบกำหนด',
+      fieldReason: 'เหตุผลในการขอขยายเวลา',
+      fieldReasonPlaceholder: 'อธิบายเหตุผลที่ต้องการเวลาเพิ่มเติมและการดำเนินการที่ผ่านมา...',
+      fieldProposedDate: 'วันครบกำหนดใหม่ที่เสนอ',
+      currentDue: 'วันครบกำหนดปัจจุบัน',
+      btnSubmit: 'ยื่นคำขอ',
+      pending: 'คำขอขยายเวลา — รอการพิจารณา',
+      pendingDesc: 'คำขอของคุณอยู่ระหว่างการพิจารณาโดยทีมความปลอดภัย',
+      approved: 'อนุมัติการขยายเวลา',
+      rejected: 'ปฏิเสธการขยายเวลา',
+      noRequests: 'ไม่มีคำขอขยายเวลา',
+      requestedBy: 'ขอโดย',
+      proposedDate: 'วันที่เสนอ',
+      reason: 'เหตุผล',
+      reviewComments: 'ความเห็นการพิจารณา',
+      reviewCommentsPlaceholder: 'เพิ่มความเห็นหรือเหตุผล...',
+      btnApprove: 'อนุมัติการขยายเวลา',
+      btnReject: 'ปฏิเสธ',
+      btnConfirmApprove: 'ยืนยัน — ขยายถึง',
+      btnConfirmReject: 'ยืนยันการปฏิเสธ',
+      extended: 'ขยายเวลาแล้ว',
+      history: 'ประวัติการขอขยายเวลา',
+      reviewedBy: 'พิจารณาโดย',
+    },
+
     // ── Auth / Login ──────────────────────────────────────────────
     auth: {
       signIn: 'เข้าสู่ระบบ',
@@ -499,10 +561,13 @@ export const translations = {
 
     // ── Roles ─────────────────────────────────────────────────────
     roles: {
-      admin: 'ผู้ดูแลระบบ',
-      safety_officer: 'เจ้าหน้าที่ความปลอดภัย',
-      inspector: 'ผู้ตรวจสอบ / ผู้ตรวจสอบบัญชี',
-      stakeholder: 'ผู้มีส่วนได้ส่วนเสีย',
+      admin:               'ผู้ดูแลระบบ',
+      accountable_manager: 'ผู้จัดการที่รับผิดชอบ',
+      safety_manager:      'ผู้จัดการความปลอดภัย',
+      safety_officer:      'เจ้าหน้าที่ความปลอดภัย',
+      quality:             'เจ้าหน้าที่คุณภาพ',
+      inspector:           'ผู้ตรวจสอบ / ผู้ตรวจสอบบัญชี',
+      stakeholder:         'ผู้มีส่วนได้ส่วนเสีย',
     },
 
     // ── User Management ───────────────────────────────────────────
@@ -541,10 +606,13 @@ export const translations = {
       fieldRoles: 'กำหนดบทบาท',
       roleAtLeastOne: 'กรุณากำหนดบทบาทอย่างน้อยหนึ่งบทบาท',
       roleDescriptions: {
-        admin:          'สิทธิ์เต็ม + จัดการผู้ใช้',
-        safety_officer: 'สร้าง CAR, ตรวจสอบ, ปิด CAR',
-        inspector:      'สร้างและออก CAR',
-        stakeholder:    'ส่ง RCA/CAP และหลักฐาน',
+        admin:               'สิทธิ์เต็มระบบ + จัดการผู้ใช้',
+        accountable_manager: 'อนุมัติ CAR, การขอขยายเวลา และการปิด CAR',
+        safety_manager:      'อนุมัติ CAP, การขอขยายเวลา และปิด CAR',
+        safety_officer:      'สร้าง CAR, ตรวจสอบ CAP, ปิด CAR',
+        quality:             'สร้างและออก CAR, ตรวจสอบและอนุมัติ CAP',
+        inspector:           'สร้างและออก CAR',
+        stakeholder:         'ส่ง RCA/CAP และหลักฐานการดำเนินการ',
       },
       btnSave: 'บันทึก',
       btnCancel: 'ยกเลิก',
