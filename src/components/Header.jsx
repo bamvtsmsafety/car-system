@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { LogOut, User, Users, Shield, Lock, ChevronDown, UserCog } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { isAdmin, getPrimaryRole } from '../utils/auth';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import { EditProfileModal } from './EditProfileModal';
 
@@ -62,7 +63,7 @@ export function Header({ onNavigate }) {
               </div>
 
               {/* Users link — admin only */}
-              {currentUser?.role === 'admin' && (
+              {isAdmin(currentUser?.roles || [currentUser?.role]) && (
                 <button
                   onClick={() => onNavigate('users')}
                   className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white transition-colors"
@@ -85,7 +86,7 @@ export function Header({ onNavigate }) {
                         {currentUser.name}
                       </p>
                       <p className="text-[10px] text-slate-400 leading-tight">
-                        {t('roles', currentUser.role) || currentUser.role}
+                        {t('roles', getPrimaryRole(currentUser.roles || [currentUser.role]))}
                       </p>
                     </div>
                     <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />

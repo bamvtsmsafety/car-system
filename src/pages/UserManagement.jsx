@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../context/LanguageContext';
-import { ROLES, ROLE_COLORS } from '../utils/auth';
+import { ROLES, ROLE_COLORS, ROLE_DESCRIPTIONS } from '../utils/auth';
 import { ORG_TYPES } from '../utils/constants';
 
 const ROLE_KEYS = Object.keys(ROLES);
@@ -28,7 +28,9 @@ function UserForm({ initial, isEdit, onSave, onCancel }) {
     username:      initial?.username      || '',
     password:      '',
     email:         initial?.email         || '',
-    role:          initial?.role          || 'stakeholder',
+    roles:         Array.isArray(initial?.roles)
+                     ? initial.roles
+                     : (initial?.role ? [initial.role] : ['stakeholder']),
     orgType:       initial?.orgType       || '',
     orgName:       initial?.orgName       || initial?.organization || '',
     department:    initial?.department    || '',
@@ -46,6 +48,7 @@ function UserForm({ initial, isEdit, onSave, onCancel }) {
   const handleSave = async () => {
     if (!form.name.trim() || !form.username.trim()) { setError('Name and username are required'); return; }
     if (!isEdit && !form.password) { setError('Password is required'); return; }
+    if (!form.roles.length) { setError(t('users', 'roleAtLeastOne')); return; }
     setSaving(true);
     setError('');
     const result = await onSave(form);
@@ -91,13 +94,37 @@ function UserForm({ initial, isEdit, onSave, onCancel }) {
           <label className={lbl}>{t('users', 'fieldEmail')}</label>
           <input type="email" value={form.email} onChange={set('email')} placeholder={t('users', 'fieldEmailPlaceholder')} className={inp} />
         </div>
-        <div>
-          <label className={lbl}>{t('users', 'fieldRole')} <span className="text-red-500">*</span></label>
-          <select value={form.role} onChange={set('role')} className={inp}>
-            {ROLE_KEYS.map((r) => (
-              <option key={r} value={r}>{ROLES[r]}</option>
-            ))}
-          </select>
+        {/* ── Role matrix ────────────────────────────────────────── */}
+        <div className="sm:col-span-2">
+          <label className={lbl}>{t('users', 'fieldRoles')} <span className="text-red-500">*</span></label>
+          <div className="rounded-lg border border-gray-200 overflow-hidden">
+            {ROLE_KEYS.map((r, i) => {
+              const checked = form.roles.includes(r);
+              return (
+                <label
+                  key={r}
+                  className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${checked ? 'bg-blue-50/60' : 'hover:bg-gray-50/70'} ${i > 0 ? 'border-t border-gray-100' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      setForm((p) => ({
+                        ...p,
+                        roles: on ? [...p.roles, r] : p.roles.filter((x) => x !== r),
+                      }));
+                    }}
+                    className="mt-0.5 rounded border-gray-300 text-blue-600 shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <RoleBadge role={r} />
+                    <p className="text-xs text-gray-400 mt-0.5">{ROLE_DESCRIPTIONS[r]}</p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
         </div>
         {/* ── Organization fields ───────────────────────────────── */}
         <div className="sm:col-span-2 pt-1 border-t border-gray-100">
@@ -161,7 +188,10 @@ export function UserManagement({ onNavigate }) {
 
   const filtered = useMemo(() => {
     if (!filterRole) return users;
-    return users.filter((u) => u.role === filterRole);
+    return users.filter((u) => {
+      const roles = Array.isArray(u.roles) ? u.roles : (u.role ? [u.role] : []);
+      return roles.includes(filterRole);
+    });
   }, [users, filterRole]);
 
   const handleCreate = async (form) => {
@@ -275,8 +305,14 @@ export function UserManagement({ onNavigate }) {
                         <div className="text-xs text-gray-400">{user.email}</div>
                       </td>
                       <td className="px-4 py-3.5 font-mono text-xs text-gray-600">{user.username}</td>
-                      <td className="px-4 py-3.5"><RoleBadge role={user.role} /></td>
-                      <td className="px-4 py-3.5 text-xs text-gray-600 max-w-[150px] truncate">{user.organization}</td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex flex-wrap gap-1">
+                          {(Array.isArray(user.roles) ? user.roles : [user.role]).filter(Boolean).map((r) => (
+                            <RoleBadge key={r} role={r} />
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-xs text-gray-600 max-w-[150px] truncate">{user.orgName || user.organization}</td>
                       <td className="px-4 py-3.5">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                           {user.isActive ? t('users', 'active') : t('users', 'inactive')}

@@ -444,15 +444,35 @@ export function CARDetail({ carId, onNavigate }) {
 
       {/* Responsible Party */}
       <Section title={t('detail', 'sec2')} color="bg-amber-600">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <InfoRow icon={User}      label={t('detail', 'fieldPerson')}   value={car.responsiblePerson} />
-          <InfoRow icon={Briefcase} label={t('detail', 'fieldPosition')}  value={car.responsiblePosition} />
-          <InfoRow icon={Layers}    label={t('detail', 'fieldOrgType')}   value={car.responsibleOrgType} />
-          <InfoRow icon={Building2} label={t('detail', 'fieldOrg')}       value={car.responsibleOrgName || car.responsibleOrganization} />
-          <InfoRow icon={Hash}      label={t('detail', 'fieldDept')}      value={car.responsibleDepartment} />
-          <InfoRow icon={User}      label={t('detail', 'fieldEmail')}     value={car.responsibleEmail || '—'} />
-          <InfoRow icon={Phone}     label={t('detail', 'fieldContact')}   value={car.responsibleContactNumber} />
-          <InfoRow icon={User}      label={t('detail', 'fieldIssuedBy')}  value={car.issuedBy} />
+        {/* Multiple responsible persons (new format) */}
+        {car.responsibleUsers?.length > 0 ? (
+          <div className="space-y-3 mb-4">
+            {car.responsibleUsers.map((u, idx) => (
+              <div key={u.id || idx} className="bg-amber-50/60 border border-amber-200 rounded-lg p-4 grid sm:grid-cols-2 gap-3">
+                <InfoRow icon={User}      label={t('detail', 'fieldPerson')}   value={u.name} />
+                <InfoRow icon={Briefcase} label={t('detail', 'fieldPosition')}  value={u.position} />
+                <InfoRow icon={Layers}    label={t('detail', 'fieldOrgType')}   value={u.orgType} />
+                <InfoRow icon={Building2} label={t('detail', 'fieldOrg')}       value={u.orgName || u.organization} />
+                <InfoRow icon={Hash}      label={t('detail', 'fieldDept')}      value={u.department} />
+                <InfoRow icon={User}      label={t('detail', 'fieldEmail')}     value={u.email} />
+                <InfoRow icon={Phone}     label={t('detail', 'fieldContact')}   value={u.contactNumber} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Legacy single-person fallback */
+          <div className="grid sm:grid-cols-2 gap-4 mb-4">
+            <InfoRow icon={User}      label={t('detail', 'fieldPerson')}   value={car.responsiblePerson} />
+            <InfoRow icon={Briefcase} label={t('detail', 'fieldPosition')}  value={car.responsiblePosition} />
+            <InfoRow icon={Layers}    label={t('detail', 'fieldOrgType')}   value={car.responsibleOrgType} />
+            <InfoRow icon={Building2} label={t('detail', 'fieldOrg')}       value={car.responsibleOrgName || car.responsibleOrganization} />
+            <InfoRow icon={Hash}      label={t('detail', 'fieldDept')}      value={car.responsibleDepartment} />
+            <InfoRow icon={User}      label={t('detail', 'fieldEmail')}     value={car.responsibleEmail || '—'} />
+            <InfoRow icon={Phone}     label={t('detail', 'fieldContact')}   value={car.responsibleContactNumber} />
+          </div>
+        )}
+        <div className="pt-3 border-t border-gray-100">
+          <InfoRow icon={User} label={t('detail', 'fieldIssuedBy')} value={car.issuedBy} />
         </div>
       </Section>
 

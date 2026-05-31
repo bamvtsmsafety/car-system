@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { ArrowLeft, Send, Save } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Send, Save, ChevronDown, X } from 'lucide-react';
 import { useCARContext } from '../context/CARContext';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../context/LanguageContext';
 import { FileUpload } from '../components/FileUpload';
-import { CAR_TYPES, PRIORITY_LEVELS, STAKEHOLDER_ORG } from '../utils/constants';
+import { CAR_TYPES, PRIORITY_LEVELS } from '../utils/constants';
 
 const today = () => new Date().toISOString().split('T')[0];
 const thirtyDaysLater = () => {
@@ -24,6 +24,99 @@ const Field = ({ label, required, error, children, hint }) => (
   </div>
 );
 
+// ── Multi-select stakeholder picker ───────────────────────────────────────────
+function UserMultiSelect({ stakeholderUsers, selected, onChange, t, inputCls }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const toggle = (user) => {
+    const exists = selected.some((u) => u.id === user.id);
+    onChange(exists ? selected.filter((u) => u.id !== user.id) : [...selected, user]);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`${inputCls} flex items-center justify-between text-left`}
+      >
+        <span className={selected.length === 0 ? 'text-gray-400' : 'text-gray-800'}>
+          {selected.length === 0
+            ? t('createCAR', 'selectFromUsers')
+            : `${selected.length} ${t('createCAR', 'selectedCount')}`}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+          {stakeholderUsers.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-gray-400 italic">{t('createCAR', 'noStakeholders')}</p>
+          ) : (
+            stakeholderUsers.map((u) => {
+              const isSelected = selected.some((s) => s.id === u.id);
+              return (
+                <label
+                  key={u.id}
+                  className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggle(u)}
+                    className="rounded border-gray-300 text-blue-600 shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800">{u.name}</p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {[u.position, u.orgName || u.organization].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                </label>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Selected chips */}
+      {selected.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {selected.map((u) => (
+            <div
+              key={u.id}
+              className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 text-xs"
+            >
+              <span className="font-medium text-blue-800">{u.name}</span>
+              {(u.position || u.orgName || u.organization) && (
+                <span className="text-blue-500">· {u.position || u.orgName || u.organization}</span>
+              )}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onChange(selected.filter((s) => s.id !== u.id)); }}
+                className="ml-0.5 text-blue-400 hover:text-blue-700 transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CreateCAR({ onNavigate }) {
   const { createCAR, issueCAR } = useCARContext();
   const { getStakeholderUsers } = useAuth();
@@ -38,15 +131,8 @@ export function CreateCAR({ onNavigate }) {
     incidentDate: today(),
     findingLocation: '',
     findingNarrative: '',
-    responsibleUserId:      '',
-    responsiblePerson:      '',
-    responsibleOrgType:     '',
-    responsibleOrgName:     '',
-    responsibleOrganization:'',
-    responsibleDepartment:  '',
-    responsiblePosition:    '',
-    responsibleEmail:       '',
-    responsibleContactNumber:'',
+    responsibleUsers:  [],    // array of user objects (multi-select)
+    responsiblePerson: '',    // manual entry fallback
     dueDate: thirtyDaysLater(),
     findingAttachments: [],
   });
@@ -55,41 +141,13 @@ export function CreateCAR({ onNavigate }) {
 
   const set = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target?.value ?? e }));
 
-  // When a stakeholder user is selected from the dropdown
-  const handleUserSelect = (e) => {
-    const uid = e.target.value;
-    if (!uid) {
-      setForm((p) => ({
-        ...p,
-        responsibleUserId: '', responsiblePerson: '',
-        responsibleOrgType: '', responsibleOrgName: '', responsibleOrganization: '',
-        responsibleDepartment: '', responsiblePosition: '',
-        responsibleEmail: '', responsibleContactNumber: '',
-      }));
-    } else {
-      const user = stakeholderUsers.find((u) => u.id === uid);
-      if (user) {
-        setForm((p) => ({
-          ...p,
-          responsibleUserId:       uid,
-          responsiblePerson:       user.name,
-          responsibleOrgType:      user.orgType       || '',
-          responsibleOrgName:      user.orgName       || user.organization,
-          responsibleOrganization: user.orgName       || user.organization,
-          responsibleDepartment:   user.department    || '',
-          responsiblePosition:     user.position      || '',
-          responsibleEmail:        user.email,
-          responsibleContactNumber:user.contactNumber || '',
-        }));
-      }
-    }
-  };
-
   const validate = () => {
     const e = {};
     if (!form.title.trim()) e.title = t('createCAR', 'fieldTitle') + ' is required';
     if (!form.findingNarrative.trim()) e.findingNarrative = t('createCAR', 'fieldNarrative') + ' is required';
-    if (!form.responsiblePerson.trim()) e.responsiblePerson = t('createCAR', 'fieldPerson') + ' is required';
+    if (form.responsibleUsers.length === 0 && !form.responsiblePerson.trim()) {
+      e.responsiblePerson = t('createCAR', 'fieldPerson') + ' is required';
+    }
     if (!form.dueDate) e.dueDate = t('createCAR', 'fieldDue') + ' is required';
     return e;
   };
@@ -126,7 +184,7 @@ export function CreateCAR({ onNavigate }) {
       </div>
 
       <div className="space-y-6">
-        {/* Section 1 */}
+        {/* Section 1 — Finding info */}
         <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-5 py-3 bg-slate-700 text-white">
             <h2 className="text-sm font-semibold">{t('createCAR', 'sec1Title')}</h2>
@@ -180,29 +238,32 @@ export function CreateCAR({ onNavigate }) {
           </div>
         </section>
 
-        {/* Section 2 */}
+        {/* Section 2 — Responsible Party */}
         <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-5 py-3 bg-amber-600 text-white">
             <h2 className="text-sm font-semibold">{t('createCAR', 'sec2Title')}</h2>
           </div>
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                {t('createCAR', 'fieldPerson')} <span className="text-red-500">*</span>
+          <div className="p-5 space-y-4">
+            {/* Multi-select picker */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('createCAR', 'responsiblePersons')} <span className="text-red-500">*</span>
               </label>
-              {/* Registered-user picker */}
-              {stakeholderUsers.length > 0 && (
-                <select value={form.responsibleUserId} onChange={handleUserSelect} className={input}>
-                  <option value="">{t('createCAR', 'orTypeManually')}</option>
-                  {stakeholderUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} — {u.organization}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {/* Manual text entry (shown when no user selected or no users exist) */}
-              {(!form.responsibleUserId) && (
+              <UserMultiSelect
+                stakeholderUsers={stakeholderUsers}
+                selected={form.responsibleUsers}
+                onChange={(users) => setForm((p) => ({ ...p, responsibleUsers: users, responsiblePerson: '' }))}
+                t={t}
+                inputCls={input}
+              />
+            </div>
+
+            {/* Manual name entry — only visible when no users selected from list */}
+            {form.responsibleUsers.length === 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('createCAR', 'fieldPerson')} {stakeholderUsers.length === 0 && <span className="text-red-500">*</span>}
+                </label>
                 <input
                   type="text"
                   value={form.responsiblePerson}
@@ -210,23 +271,13 @@ export function CreateCAR({ onNavigate }) {
                   placeholder={t('createCAR', 'fieldPersonPlaceholder')}
                   className={input}
                 />
-              )}
-              {/* Read-only display when user selected */}
-              {form.responsibleUserId && (
-                <p className="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                  {form.responsiblePerson}
-                </p>
-              )}
-              {errors.responsiblePerson && <p className="text-xs text-red-500">{errors.responsiblePerson}</p>}
-            </div>
-            <Field label={t('createCAR', 'fieldOrg')} required>
-              <select value={form.responsibleOrganization} onChange={set('responsibleOrganization')} className={input}>
-                {STAKEHOLDER_ORG.map((o) => <option key={o}>{o}</option>)}
-              </select>
-            </Field>
-            <Field label={t('createCAR', 'fieldEmail')}>
-              <input type="email" value={form.responsibleEmail} onChange={set('responsibleEmail')} placeholder={t('createCAR', 'fieldEmailPlaceholder')} className={input} />
-            </Field>
+                {errors.responsiblePerson && (
+                  <p className="mt-1 text-xs text-red-500">{errors.responsiblePerson}</p>
+                )}
+              </div>
+            )}
+
+            {/* Due date */}
             <Field label={t('createCAR', 'fieldDue')} required error={errors.dueDate}>
               <input type="date" value={form.dueDate} onChange={set('dueDate')} min={today()} className={input} />
             </Field>

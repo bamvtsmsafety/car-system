@@ -31,7 +31,7 @@ export function CARProvider({ children }) {
 
   // Derived role / user name — backward-compatible strings used throughout UI
   const role = authUser
-    ? isSafetyTeam(authUser.role) ? 'safety' : 'stakeholder'
+    ? isSafetyTeam(authUser.roles || authUser.role) ? 'safety' : 'stakeholder'
     : null;
   const currentUserName = authUser?.name || '';
 
@@ -64,16 +64,17 @@ export function CARProvider({ children }) {
       findingLocation: formData.findingLocation,
       incidentDate: formData.incidentDate,
       referenceNumber: formData.referenceNumber,
-      // Responsible party
-      responsibleUserId:       formData.responsibleUserId       || null,
-      responsiblePerson:       formData.responsiblePerson,
-      responsibleOrgType:      formData.responsibleOrgType      || '',
-      responsibleOrgName:      formData.responsibleOrgName      || formData.responsibleOrganization,
-      responsibleOrganization: formData.responsibleOrganization || formData.responsibleOrgName,
-      responsibleDepartment:   formData.responsibleDepartment   || '',
-      responsiblePosition:     formData.responsiblePosition     || '',
-      responsibleEmail:        formData.responsibleEmail,
-      responsibleContactNumber:formData.responsibleContactNumber|| '',
+      // Responsible party — array (primary person for backward compat)
+      responsibleUsers:        formData.responsibleUsers        || [],
+      responsibleUserId:       formData.responsibleUsers?.[0]?.id || formData.responsibleUserId || null,
+      responsiblePerson:       formData.responsibleUsers?.[0]?.name || formData.responsiblePerson,
+      responsibleOrgType:      formData.responsibleUsers?.[0]?.orgType      || formData.responsibleOrgType      || '',
+      responsibleOrgName:      formData.responsibleUsers?.[0]?.orgName      || formData.responsibleOrgName      || formData.responsibleOrganization,
+      responsibleOrganization: formData.responsibleUsers?.[0]?.orgName      || formData.responsibleOrganization || '',
+      responsibleDepartment:   formData.responsibleUsers?.[0]?.department   || formData.responsibleDepartment   || '',
+      responsiblePosition:     formData.responsibleUsers?.[0]?.position     || formData.responsiblePosition     || '',
+      responsibleEmail:        formData.responsibleUsers?.[0]?.email        || formData.responsibleEmail,
+      responsibleContactNumber:formData.responsibleUsers?.[0]?.contactNumber|| formData.responsibleContactNumber|| '',
       issuedBy: currentUserName,
       dueDate: formData.dueDate,
       findingAttachments: formData.findingAttachments || [],

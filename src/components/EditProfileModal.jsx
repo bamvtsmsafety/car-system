@@ -3,6 +3,7 @@ import { X, UserCog, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../context/LanguageContext';
 import { ORG_TYPES } from '../utils/constants';
+import { ROLE_COLORS } from '../utils/auth';
 
 export function EditProfileModal({ onClose }) {
   const { currentUser, updateUser } = useAuth();
@@ -77,13 +78,19 @@ export function EditProfileModal({ onClose }) {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Role — read-only */}
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                <span className="text-xs text-gray-500">{t('users', 'fieldRole')}:</span>
-                <span className="text-xs font-semibold text-gray-700">
-                  {t('roles', currentUser?.role) || currentUser?.role}
-                </span>
-                <span className="ml-auto text-xs text-gray-400 italic">(set by admin)</span>
+              {/* Roles — read-only chips */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-gray-500">{t('users', 'fieldRoles')}:</span>
+                  <span className="text-xs text-gray-400 italic">(set by admin)</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(Array.isArray(currentUser?.roles) ? currentUser.roles : [currentUser?.role]).filter(Boolean).map((r) => (
+                    <span key={r} className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[r] || 'bg-gray-100 text-gray-700'}`}>
+                      {t('roles', r) || r}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               {/* ── Personal info ── */}

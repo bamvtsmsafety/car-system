@@ -1,23 +1,45 @@
 export const ROLES = {
-  admin: 'Admin',
+  admin:          'Admin',
   safety_officer: 'Safety Officer',
-  inspector: 'Inspector / Auditor',
-  stakeholder: 'Stakeholder / Auditee',
+  inspector:      'Inspector / Auditor',
+  stakeholder:    'Stakeholder / Auditee',
+};
+
+export const ROLE_DESCRIPTIONS = {
+  admin:          'Full access + User Management',
+  safety_officer: 'Create CARs, Review CAP, Close CARs',
+  inspector:      'Create & Issue CARs',
+  stakeholder:    'Submit RCA/CAP & Final Evidence',
 };
 
 export const ROLE_COLORS = {
-  admin: 'bg-purple-100 text-purple-800 border border-purple-300',
+  admin:          'bg-purple-100 text-purple-800 border border-purple-300',
   safety_officer: 'bg-blue-100 text-blue-800 border border-blue-300',
-  inspector: 'bg-indigo-100 text-indigo-800 border border-indigo-300',
-  stakeholder: 'bg-amber-100 text-amber-800 border border-amber-300',
+  inspector:      'bg-indigo-100 text-indigo-800 border border-indigo-300',
+  stakeholder:    'bg-amber-100 text-amber-800 border border-amber-300',
+};
+
+const ROLE_PRIORITY = ['admin', 'safety_officer', 'inspector', 'stakeholder'];
+
+/** Normalise: accepts a single string OR an array */
+const toArr = (roles) =>
+  Array.isArray(roles) ? roles : (roles ? [roles] : []);
+
+/** Returns the highest-priority role for display purposes */
+export const getPrimaryRole = (roles) => {
+  const arr = toArr(roles);
+  for (const r of ROLE_PRIORITY) {
+    if (arr.includes(r)) return r;
+  }
+  return arr[0] || 'stakeholder';
 };
 
 /** Admin + Safety Officer + Inspector can create/review/close CARs */
-export const isSafetyTeam = (role) =>
-  ['admin', 'safety_officer', 'inspector'].includes(role);
+export const isSafetyTeam = (roles) =>
+  toArr(roles).some((r) => ['admin', 'safety_officer', 'inspector'].includes(r));
 
-export const isStakeholder = (role) => role === 'stakeholder';
-export const isAdmin = (role) => role === 'admin';
+export const isStakeholder = (roles) => toArr(roles).includes('stakeholder');
+export const isAdmin       = (roles) => toArr(roles).includes('admin');
 
 const SALT = 'CAR_SALT_v1_';
 

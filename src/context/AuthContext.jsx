@@ -3,19 +3,19 @@ import { v4 as uuid } from 'uuid';
 import {
   loadData, saveData, loadSession, saveSession, clearSession,
 } from '../utils/storage';
-import { hashPassword, verifyPassword } from '../utils/auth';
+import { hashPassword, verifyPassword, getPrimaryRole } from '../utils/auth';
 
 const AuthContext = createContext(null);
 
 // ── Default seed accounts (created on first launch) ───────────────────────────
 const SEED_USERS = [
-  { username: 'admin',      password: 'admin123',   name: 'System Administrator', email: 'admin@airport.com',     role: 'admin',          organization: 'Administration',     orgType: 'Airport Department',        orgName: 'Administration',         department: 'IT / Administration', position: 'System Administrator', contactNumber: '' },
-  { username: 'safety1',    password: 'safety123',  name: 'Safety Officer',       email: 'safety@airport.com',    role: 'safety_officer', organization: 'Safety Department',  orgType: 'Airport Department',        orgName: 'AOT Safety Department',  department: 'Safety Management',   position: 'Safety Officer',       contactNumber: '' },
-  { username: 'inspector1', password: 'inspect123', name: 'Safety Inspector',     email: 'inspector@airport.com', role: 'inspector',      organization: 'Safety Department',  orgType: 'Airport Department',        orgName: 'AOT Safety Department',  department: 'Safety Inspection',   position: 'Safety Inspector',     contactNumber: '' },
-  { username: 'auditor1',   password: 'audit123',   name: 'Quality Auditor',      email: 'auditor@airport.com',   role: 'inspector',      organization: 'Safety Department',  orgType: 'Airport Department',        orgName: 'AOT Safety Department',  department: 'Quality Assurance',   position: 'Quality Auditor',      contactNumber: '' },
-  { username: 'stake1',     password: 'stake123',   name: 'Airside Ops Manager',  email: 'airside@airport.com',   role: 'stakeholder',    organization: 'Airside Operations', orgType: 'Airport Department',        orgName: 'Airside Operations Dept',department: 'Operations',          position: 'Operations Manager',   contactNumber: '' },
-  { username: 'stake2',     password: 'stake123',   name: 'Ground Handling Mgr',  email: 'ground@airport.com',    role: 'stakeholder',    organization: 'Ground Handling',    orgType: 'Ground Handling Company',   orgName: 'Ground Handling Dept',   department: 'Ramp Services',       position: 'Department Manager',   contactNumber: '' },
-  { username: 'stake3',     password: 'stake123',   name: 'Terminal Ops Manager', email: 'terminal@airport.com',  role: 'stakeholder',    organization: 'Terminal Operations', orgType: 'Terminal Operations',      orgName: 'Terminal Operations Dept',department: 'Passenger Services',  position: 'Operations Manager',   contactNumber: '' },
+  { username: 'admin',      password: 'admin123',   name: 'System Administrator', email: 'admin@airport.com',     roles: ['admin'],                       orgType: 'Airport Department',       orgName: 'Administration',          department: 'IT / Administration', position: 'System Administrator', contactNumber: '' },
+  { username: 'safety1',    password: 'safety123',  name: 'Safety Officer',       email: 'safety@airport.com',    roles: ['safety_officer'],              orgType: 'Airport Department',       orgName: 'AOT Safety Department',   department: 'Safety Management',   position: 'Safety Officer',       contactNumber: '' },
+  { username: 'inspector1', password: 'inspect123', name: 'Safety Inspector',     email: 'inspector@airport.com', roles: ['inspector'],                   orgType: 'Airport Department',       orgName: 'AOT Safety Department',   department: 'Safety Inspection',   position: 'Safety Inspector',     contactNumber: '' },
+  { username: 'auditor1',   password: 'audit123',   name: 'Quality Auditor',      email: 'auditor@airport.com',   roles: ['inspector'],                   orgType: 'Airport Department',       orgName: 'AOT Safety Department',   department: 'Quality Assurance',   position: 'Quality Auditor',      contactNumber: '' },
+  { username: 'stake1',     password: 'stake123',   name: 'Airside Ops Manager',  email: 'airside@airport.com',   roles: ['stakeholder'],                 orgType: 'Airport Department',       orgName: 'Airside Operations Dept', department: 'Operations',          position: 'Operations Manager',   contactNumber: '' },
+  { username: 'stake2',     password: 'stake123',   name: 'Ground Handling Mgr',  email: 'ground@airport.com',    roles: ['stakeholder'],                 orgType: 'Ground Handling Company',  orgName: 'Ground Handling Dept',    department: 'Ramp Services',       position: 'Department Manager',   contactNumber: '' },
+  { username: 'stake3',     password: 'stake123',   name: 'Terminal Ops Manager', email: 'terminal@airport.com',  roles: ['stakeholder'],                 orgType: 'Terminal Operations',      orgName: 'Terminal Operations Dept',department: 'Passenger Services',  position: 'Operations Manager',   contactNumber: '' },
 ];
 
 export function AuthProvider({ children }) {
@@ -31,16 +31,18 @@ export function AuthProvider({ children }) {
       if (!data.users || data.users.length === 0) {
         const seeded = [];
         for (const u of SEED_USERS) {
-          seeded.push({
+          const roles = u.roles || (u.role ? [u.role] : ['stakeholder']);
+        seeded.push({
             id: uuid(),
             username: u.username,
             passwordHash: await hashPassword(u.password),
             name: u.name,
             email: u.email,
-            role: u.role,
-            organization: u.orgName || u.organization,
+            roles,
+            role: getPrimaryRole(roles),   // kept for display fallback
+            organization: u.orgName || u.organization || '',
             orgType:       u.orgType       || '',
-            orgName:       u.orgName       || u.organization,
+            orgName:       u.orgName       || u.organization || '',
             department:    u.department    || '',
             position:      u.position      || '',
             contactNumber: u.contactNumber || '',
@@ -49,6 +51,20 @@ export function AuthProvider({ children }) {
           });
         }
         data = { ...data, users: seeded };
+        saveData(data);
+      }
+
+      // ── Migrate legacy users: role (string) → roles (array) ──────
+      let migrated = false;
+      const migratedUsers = data.users.map((u) => {
+        if (!Array.isArray(u.roles)) {
+          migrated = true;
+          return { ...u, roles: u.role ? [u.role] : ['stakeholder'] };
+        }
+        return u;
+      });
+      if (migrated) {
+        data = { ...data, users: migratedUsers };
         saveData(data);
       }
 
@@ -97,11 +113,12 @@ export function AuthProvider({ children }) {
     setUsers(data.users || []);
   }, []);
 
-  const createUser = useCallback(async ({ username, password, name, email, role, organization, orgType, orgName, department, position, contactNumber }) => {
+  const createUser = useCallback(async ({ username, password, name, email, roles, role, organization, orgType, orgName, department, position, contactNumber }) => {
     const data = loadData();
     if (data.users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
       return { success: false, error: 'usernameTaken' };
     }
+    const resolvedRoles = roles || (role ? [role] : ['stakeholder']);
     const resolvedOrg = (orgName || organization || '').trim();
     const newUser = {
       id: uuid(),
@@ -109,7 +126,8 @@ export function AuthProvider({ children }) {
       passwordHash: await hashPassword(password),
       name: name.trim(),
       email: email.trim(),
-      role,
+      roles:         resolvedRoles,
+      role:          getPrimaryRole(resolvedRoles),
       organization:  resolvedOrg,
       orgType:       (orgType       || '').trim(),
       orgName:       resolvedOrg,
@@ -143,6 +161,10 @@ export function AuthProvider({ children }) {
       updated.passwordHash = await hashPassword(changes.password);
       delete updated.password;
     }
+    // Keep primary-role display field in sync
+    if (changes.roles) {
+      updated.role = getPrimaryRole(changes.roles);
+    }
 
     const newUsers = [...data.users];
     newUsers[idx] = updated;
@@ -165,7 +187,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const getStakeholderUsers = useCallback(() =>
-    users.filter((u) => u.role === 'stakeholder' && u.isActive),
+    users.filter((u) => {
+      const roles = u.roles || [u.role];
+      return roles.includes('stakeholder') && u.isActive;
+    }),
   [users]);
 
   // ── Self-service password change ──────────────────────────────────────────────

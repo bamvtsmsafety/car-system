@@ -53,11 +53,14 @@ export function Dashboard({ onNavigate }) {
       // Hide drafts and only show CARs assigned to this user
       list = list.filter((c) => c.status !== CAR_STATUS.DRAFT);
       if (authUser) {
-        list = list.filter(
-          (c) =>
-            c.responsibleUserId === authUser.id ||
-            // backward-compat: match by name if no userId recorded
-            (!c.responsibleUserId && c.responsiblePerson?.toLowerCase() === authUser.name?.toLowerCase()),
+        list = list.filter((c) =>
+          // new: multi-user array
+          c.responsibleUsers?.some((u) => u.id === authUser.id) ||
+          // legacy: single responsibleUserId
+          c.responsibleUserId === authUser.id ||
+          // backward-compat: name match when no userId recorded
+          (!c.responsibleUserId && !c.responsibleUsers?.length &&
+            c.responsiblePerson?.toLowerCase() === authUser.name?.toLowerCase()),
         );
       }
     }
@@ -88,9 +91,11 @@ export function Dashboard({ onNavigate }) {
     if (role !== 'stakeholder') return cars.length;
     const nonDraft = cars.filter((c) => c.status !== CAR_STATUS.DRAFT);
     if (!authUser) return nonDraft.length;
-    return nonDraft.filter(
-      (c) => c.responsibleUserId === authUser.id ||
-        (!c.responsibleUserId && c.responsiblePerson?.toLowerCase() === authUser.name?.toLowerCase()),
+    return nonDraft.filter((c) =>
+      c.responsibleUsers?.some((u) => u.id === authUser.id) ||
+      c.responsibleUserId === authUser.id ||
+      (!c.responsibleUserId && !c.responsibleUsers?.length &&
+        c.responsiblePerson?.toLowerCase() === authUser.name?.toLowerCase()),
     ).length;
   }, [cars, role, authUser]);
 
