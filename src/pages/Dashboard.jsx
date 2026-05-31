@@ -1,29 +1,26 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import {
-  Plus, Search, Filter, AlertTriangle, CheckCircle2, Clock,
-  FileWarning, ChevronRight, BarChart3, TrendingUp, ListChecks, AlertCircle
+  Plus, Search, AlertTriangle, CheckCircle2, Clock,
+  FileWarning, ChevronRight, ListChecks, AlertCircle
 } from 'lucide-react';
 import { useCARContext } from '../context/CARContext';
+import { useAuth } from '../context/AuthContext';
+import { useT } from '../context/LanguageContext';
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge';
-import { CAR_STATUS, STATUS_LABELS, CAR_TYPES, PRIORITY_LEVELS } from '../utils/constants';
-
-const STAT_CONFIG = [
-  { key: 'total', label: 'Total CARs', icon: ListChecks, color: 'bg-slate-700' },
-  { key: 'open', label: 'Open', icon: AlertCircle, color: 'bg-blue-600' },
-  { key: 'pending', label: 'Pending Review', icon: Clock, color: 'bg-amber-500' },
-  { key: 'closed', label: 'Closed', icon: CheckCircle2, color: 'bg-emerald-600' },
-];
+import { CAR_STATUS, CAR_TYPES, PRIORITY_LEVELS } from '../utils/constants';
 
 export function Dashboard({ onNavigate }) {
   const { cars, role } = useCARContext();
+  const { currentUser: authUser } = useAuth();
+  const t = useT();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
 
   const stats = useMemo(() => {
-    const open = cars.filter((c) => ![CAR_STATUS.CLOSED].includes(c.status));
+    const open = cars.filter((c) => c.status !== CAR_STATUS.CLOSED);
     const pending = cars.filter((c) => [CAR_STATUS.RCA_SUBMITTED, CAR_STATUS.ACTION_SUBMITTED].includes(c.status));
     return {
       total: cars.length,
@@ -33,10 +30,36 @@ export function Dashboard({ onNavigate }) {
     };
   }, [cars]);
 
+  const STAT_CONFIG = [
+    { key: 'total', label: t('dashboard', 'totalCARs'), icon: ListChecks, color: 'bg-slate-700' },
+    { key: 'open', label: t('dashboard', 'open'), icon: AlertCircle, color: 'bg-blue-600' },
+    { key: 'pending', label: t('dashboard', 'pendingReview'), icon: Clock, color: 'bg-amber-500' },
+    { key: 'closed', label: t('dashboard', 'closed'), icon: CheckCircle2, color: 'bg-emerald-600' },
+  ];
+
+  const statusLabels = {
+    DRAFT: t('status', 'DRAFT'),
+    ISSUED: t('status', 'ISSUED'),
+    RCA_SUBMITTED: t('status', 'RCA_SUBMITTED'),
+    RCA_APPROVED: t('status', 'RCA_APPROVED'),
+    RCA_REJECTED: t('status', 'RCA_REJECTED'),
+    ACTION_SUBMITTED: t('status', 'ACTION_SUBMITTED'),
+    CLOSED: t('status', 'CLOSED'),
+  };
+
   const filtered = useMemo(() => {
     let list = cars;
     if (role === 'stakeholder') {
+      // Hide drafts and only show CARs assigned to this user
       list = list.filter((c) => c.status !== CAR_STATUS.DRAFT);
+      if (authUser) {
+        list = list.filter(
+          (c) =>
+            c.responsibleUserId === authUser.id ||
+            // backward-compat: match by name if no userId recorded
+            (!c.responsibleUserId && c.responsiblePerson?.toLowerCase() === authUser.name?.toLowerCase()),
+        );
+      }
     }
     if (search) {
       const q = search.toLowerCase();
@@ -61,6 +84,16 @@ export function Dashboard({ onNavigate }) {
     return counts;
   }, [cars, role]);
 
+  const visibleTotal = useMemo(() => {
+    if (role !== 'stakeholder') return cars.length;
+    const nonDraft = cars.filter((c) => c.status !== CAR_STATUS.DRAFT);
+    if (!authUser) return nonDraft.length;
+    return nonDraft.filter(
+      (c) => c.responsibleUserId === authUser.id ||
+        (!c.responsibleUserId && c.responsiblePerson?.toLowerCase() === authUser.name?.toLowerCase()),
+    ).length;
+  }, [cars, role, authUser]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Stats */}
@@ -83,14 +116,14 @@ export function Dashboard({ onNavigate }) {
         {/* Toolbar */}
         <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900">
-            {role === 'safety' ? 'All Corrective Action Requests' : 'My Assigned CARs'}
+            {role === 'safety' ? t('dashboard', 'titleAll') : t('dashboard', 'titleMy')}
           </h2>
           {role === 'safety' && (
             <button
               onClick={() => onNavigate('create')}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
             >
-              <Plus className="w-4 h-4" /> New CAR
+              <Plus className="w-4 h-4" /> {t('dashboard', 'newCAR')}
             </button>
           )}
         </div>
@@ -101,7 +134,7 @@ export function Dashboard({ onNavigate }) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search CAR number, title, or responsible party..."
+              placeholder={t('dashboard', 'searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
@@ -112,8 +145,8 @@ export function Dashboard({ onNavigate }) {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-600"
           >
-            <option value="">All Statuses</option>
-            {Object.entries(STATUS_LABELS).map(([k, v]) => (
+            <option value="">{t('dashboard', 'allStatuses')}</option>
+            {Object.entries(statusLabels).map(([k, v]) => (
               <option key={k} value={k}>{v} {statusCounts[k] ? `(${statusCounts[k]})` : ''}</option>
             ))}
           </select>
@@ -122,16 +155,20 @@ export function Dashboard({ onNavigate }) {
             onChange={(e) => setFilterType(e.target.value)}
             className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-600"
           >
-            <option value="">All Types</option>
-            {CAR_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            <option value="">{t('dashboard', 'allTypes')}</option>
+            {CAR_TYPES.map((type) => (
+              <option key={type} value={type}>{t('carTypes', type)}</option>
+            ))}
           </select>
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
             className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-600"
           >
-            <option value="">All Priorities</option>
-            {PRIORITY_LEVELS.map((p) => <option key={p} value={p}>{p}</option>)}
+            <option value="">{t('dashboard', 'allPriorities')}</option>
+            {PRIORITY_LEVELS.map((p) => (
+              <option key={p} value={p}>{t('priority', p)}</option>
+            ))}
           </select>
         </div>
 
@@ -140,16 +177,11 @@ export function Dashboard({ onNavigate }) {
           <div className="py-16 text-center">
             <FileWarning className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-400 text-sm">
-              {cars.length === 0
-                ? 'No CARs yet. Create the first one!'
-                : 'No CARs match your search.'}
+              {cars.length === 0 ? t('dashboard', 'noCARsYet') : t('dashboard', 'searchPlaceholder')}
             </p>
             {role === 'safety' && cars.length === 0 && (
-              <button
-                onClick={() => onNavigate('create')}
-                className="mt-4 text-sm text-blue-600 hover:underline"
-              >
-                Create a new CAR →
+              <button onClick={() => onNavigate('create')} className="mt-4 text-sm text-blue-600 hover:underline">
+                {t('dashboard', 'createNewCAR')}
               </button>
             )}
           </div>
@@ -158,13 +190,13 @@ export function Dashboard({ onNavigate }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                  <th className="text-left px-5 py-3 font-medium">CAR #</th>
-                  <th className="text-left px-4 py-3 font-medium">Title / Finding</th>
-                  <th className="text-left px-4 py-3 font-medium">Type</th>
-                  <th className="text-left px-4 py-3 font-medium">Priority</th>
-                  <th className="text-left px-4 py-3 font-medium">Responsible Party</th>
-                  <th className="text-left px-4 py-3 font-medium">Status</th>
-                  <th className="text-left px-4 py-3 font-medium">Due Date</th>
+                  <th className="text-left px-5 py-3 font-medium">{t('dashboard', 'colCAR')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('dashboard', 'colTitle')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('dashboard', 'colType')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('dashboard', 'colPriority')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('dashboard', 'colResponsible')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('dashboard', 'colStatus')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('dashboard', 'colDue')}</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -185,7 +217,9 @@ export function Dashboard({ onNavigate }) {
                         <div className="text-xs text-gray-400 mt-0.5">{car.findingLocation || '—'}</div>
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap">
-                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{car.carType}</span>
+                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                          {t('carTypes', car.carType)}
+                        </span>
                       </td>
                       <td className="px-4 py-3.5">
                         <PriorityBadge priority={car.priority} />
@@ -217,7 +251,7 @@ export function Dashboard({ onNavigate }) {
         )}
 
         <div className="px-5 py-3 border-t border-gray-50 text-xs text-gray-400">
-          Showing {filtered.length} of {role === 'stakeholder' ? cars.filter(c => c.status !== CAR_STATUS.DRAFT).length : cars.length} records
+          {t('dashboard', 'showing')} {filtered.length} {t('dashboard', 'of')} {visibleTotal} {t('dashboard', 'records')}
         </div>
       </div>
     </div>

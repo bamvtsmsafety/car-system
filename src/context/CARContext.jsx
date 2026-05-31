@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { format } from 'date-fns';
 import { loadData, saveData } from '../utils/storage';
 import { CAR_STATUS } from '../utils/constants';
+import { useAuth } from './AuthContext';
+import { isSafetyTeam } from '../utils/auth';
 
 const CARContext = createContext(null);
 
@@ -26,14 +27,27 @@ const addAuditEntry = (car, action, actor, notes = '') => ({
 });
 
 export function CARProvider({ children }) {
-  const [data, setData] = useState(() => loadData());
-  const [role, setRole] = useState('safety'); // 'safety' | 'stakeholder'
-  const [currentUser, setCurrentUser] = useState('Safety Officer');
+  const { currentUser: authUser } = useAuth();
+
+  // Derived role / user name — backward-compatible strings used throughout UI
+  const role = authUser
+    ? isSafetyTeam(authUser.role) ? 'safety' : 'stakeholder'
+    : null;
+  const currentUserName = authUser?.name || '';
+
+  // Only manage cars + nextSeq in state; never overwrite users written by AuthContext
+  const [data, setData] = useState(() => {
+    const d = loadData();
+    return { cars: d.cars || [], nextSeq: d.nextSeq || 1 };
+  });
 
   useEffect(() => {
-    saveData(data);
+    // Merge into latest localStorage data so we never clobber AuthContext's users
+    const latest = loadData();
+    saveData({ ...latest, cars: data.cars, nextSeq: data.nextSeq });
   }, [data]);
 
+  // ── CAR operations ────────────────────────────────────────────────────────────
   const createCAR = useCallback((formData) => {
     const seq = data.nextSeq;
     const newCAR = {
@@ -41,8 +55,8 @@ export function CARProvider({ children }) {
       carNumber: generateCARNumber(seq),
       status: CAR_STATUS.DRAFT,
       createdAt: new Date().toISOString(),
+      createdById: authUser?.id || null,
       auditTrail: [],
-      // Finding details
       title: formData.title,
       carType: formData.carType,
       priority: formData.priority,
@@ -51,25 +65,25 @@ export function CARProvider({ children }) {
       incidentDate: formData.incidentDate,
       referenceNumber: formData.referenceNumber,
       // Responsible party
+      responsibleUserId: formData.responsibleUserId || null,
       responsiblePerson: formData.responsiblePerson,
       responsibleOrganization: formData.responsibleOrganization,
       responsibleEmail: formData.responsibleEmail,
-      issuedBy: currentUser,
+      issuedBy: currentUserName,
       dueDate: formData.dueDate,
-      // Attachments (base64)
       findingAttachments: formData.findingAttachments || [],
-      // RCA/CAP fields (filled by stakeholder)
+      // RCA/CAP (filled by stakeholder)
       rootCauseAnalysis: '',
       correctiveActionPlan: '',
       capTargetDate: '',
       capAttachments: [],
       rcaSubmittedAt: null,
       rcaSubmittedBy: '',
-      // Review fields
+      // Review
       reviewComments: '',
       reviewedBy: '',
       reviewedAt: null,
-      // Final action fields
+      // Final action
       finalActionTaken: '',
       finalActionDate: '',
       finalActionAttachments: [],
@@ -80,24 +94,24 @@ export function CARProvider({ children }) {
       closedBy: '',
       closedAt: null,
     };
-    const withAudit = addAuditEntry(newCAR, 'CAR Created', currentUser, `CAR ${newCAR.carNumber} created`);
+    const withAudit = addAuditEntry(newCAR, 'CAR Created', currentUserName, `CAR ${newCAR.carNumber} created`);
     setData((prev) => ({
       cars: [withAudit, ...prev.cars],
       nextSeq: prev.nextSeq + 1,
     }));
     return withAudit;
-  }, [data.nextSeq, currentUser]);
+  }, [data.nextSeq, authUser, currentUserName]);
 
   const issueCAR = useCallback((carId) => {
     setData((prev) => ({
       ...prev,
       cars: prev.cars.map((c) => {
         if (c.id !== carId) return c;
-        const updated = { ...c, status: CAR_STATUS.ISSUED, issuedAt: new Date().toISOString() };
-        return addAuditEntry(updated, 'CAR Issued', currentUser, 'CAR issued to responsible person');
+        const updated = { ...c, status: CAR_STATUS.ISSUED, issuedAt: new Date().toISOString(), issuedBy: currentUserName };
+        return addAuditEntry(updated, 'CAR Issued', currentUserName, 'CAR issued to responsible person');
       }),
     }));
-  }, [currentUser]);
+  }, [currentUserName]);
 
   const submitRCA = useCallback((carId, formData) => {
     setData((prev) => ({
@@ -127,16 +141,15 @@ export function CARProvider({ children }) {
         const status = approved ? CAR_STATUS.RCA_APPROVED : CAR_STATUS.RCA_REJECTED;
         const action = approved ? 'CAP Approved' : 'CAP Rejected';
         const updated = {
-          ...c,
-          status,
+          ...c, status,
           reviewComments: comments,
-          reviewedBy: currentUser,
+          reviewedBy: currentUserName,
           reviewedAt: new Date().toISOString(),
         };
-        return addAuditEntry(updated, action, currentUser, comments);
+        return addAuditEntry(updated, action, currentUserName, comments);
       }),
     }));
-  }, [currentUser]);
+  }, [currentUserName]);
 
   const submitFinalAction = useCallback((carId, formData) => {
     setData((prev) => ({
@@ -166,28 +179,23 @@ export function CARProvider({ children }) {
           ...c,
           status: CAR_STATUS.CLOSED,
           closureComments: comments,
-          closedBy: currentUser,
+          closedBy: currentUserName,
           closedAt: new Date().toISOString(),
         };
-        return addAuditEntry(updated, 'CAR Closed', currentUser, comments || 'CAR accepted and closed');
+        return addAuditEntry(updated, 'CAR Closed', currentUserName, comments || 'CAR accepted and closed');
       }),
     }));
-  }, [currentUser]);
+  }, [currentUserName]);
 
   const deleteCAR = useCallback((carId) => {
-    setData((prev) => ({
-      ...prev,
-      cars: prev.cars.filter((c) => c.id !== carId),
-    }));
+    setData((prev) => ({ ...prev, cars: prev.cars.filter((c) => c.id !== carId) }));
   }, []);
 
   return (
     <CARContext.Provider value={{
       cars: data.cars,
       role,
-      setRole,
-      currentUser,
-      setCurrentUser,
+      currentUser: currentUserName,  // keep as string for backward compat
       createCAR,
       issueCAR,
       submitRCA,

@@ -1,23 +1,16 @@
-import { Shield, ChevronDown, User } from 'lucide-react';
-import { useCARContext } from '../context/CARContext';
-
-const USERS = {
-  safety: ['Safety Officer', 'Safety Manager', 'Safety Inspector', 'QA Auditor'],
-  stakeholder: ['Airside Operations Mgr', 'Ground Handling Mgr', 'Terminal Ops Mgr', 'Engineering Mgr', 'Security Mgr'],
-};
+import { LogOut, User, Users, Shield } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export function Header({ onNavigate }) {
-  const { role, setRole, currentUser, setCurrentUser } = useCARContext();
-
-  const handleRoleChange = (newRole) => {
-    setRole(newRole);
-    setCurrentUser(USERS[newRole][0]);
-  };
+  const { currentUser, logout } = useAuth();
+  const { lang, switchLang, t } = useLanguage();
 
   return (
     <header className="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          {/* Logo */}
           <button
             onClick={() => onNavigate('dashboard')}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
@@ -26,53 +19,63 @@ export function Header({ onNavigate }) {
               <Shield className="w-5 h-5" />
             </div>
             <div className="text-left">
-              <div className="font-bold text-sm leading-tight">Airport Safety Management</div>
-              <div className="text-xs text-slate-400 leading-tight">Corrective Action Request System</div>
+              <div className="font-bold text-sm leading-tight">{t('app', 'name')}</div>
+              <div className="text-xs text-slate-400 leading-tight">{t('app', 'subtitle')}</div>
             </div>
           </button>
 
-          <div className="flex items-center gap-3">
-            {/* Role switcher */}
-            <div className="flex items-center bg-slate-800 rounded-lg p-1 gap-1">
-              <button
-                onClick={() => handleRoleChange('safety')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                  role === 'safety' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Safety Team
-              </button>
-              <button
-                onClick={() => handleRoleChange('stakeholder')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                  role === 'stakeholder' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Stakeholder
-              </button>
+          {/* Right-side controls */}
+          <div className="flex items-center gap-2">
+            {/* Language toggle */}
+            <div className="flex items-center bg-slate-800 rounded-lg p-1 gap-0.5">
+              {['en', 'th'].map((l) => (
+                <button
+                  key={l}
+                  onClick={() => switchLang(l)}
+                  className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
+                    lang === l ? 'bg-white text-slate-900' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {l.toUpperCase()}
+                </button>
+              ))}
             </div>
 
-            {/* User selector */}
-            <div className="relative group">
-              <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-1.5 text-sm transition-colors">
-                <User className="w-4 h-4 text-slate-400" />
-                <span className="text-xs max-w-[140px] truncate">{currentUser}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
+            {/* Users link — admin only */}
+            {currentUser?.role === 'admin' && (
+              <button
+                onClick={() => onNavigate('users')}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white transition-colors"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t('header', 'users')}</span>
               </button>
-              <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                {USERS[role].map((u) => (
-                  <button
-                    key={u}
-                    onClick={() => setCurrentUser(u)}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                      currentUser === u ? 'text-blue-600 font-medium bg-blue-50' : 'text-gray-700'
-                    }`}
-                  >
-                    {u}
-                  </button>
-                ))}
+            )}
+
+            {/* Current user chip */}
+            {currentUser && (
+              <div className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-1.5">
+                <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <div className="text-left hidden sm:block">
+                  <p className="text-xs font-medium text-white leading-tight max-w-[130px] truncate">
+                    {currentUser.name}
+                  </p>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    {t('roles', currentUser.role) || currentUser.role}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Logout */}
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-red-700 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white transition-colors"
+              title={t('header', 'logout')}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t('header', 'logout')}</span>
+            </button>
           </div>
         </div>
       </div>

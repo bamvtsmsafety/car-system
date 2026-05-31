@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Paperclip, X, FileText, Image, File } from 'lucide-react';
+import { useT } from '../context/LanguageContext';
 
 const fileIcon = (type) => {
   if (type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />;
@@ -21,13 +22,15 @@ const formatSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-export function FileUpload({ files = [], onChange, label = 'Attach Files', accept = '*', maxMB = 10 }) {
+export function FileUpload({ files = [], onChange, label, accept = '*', maxMB = 10 }) {
+  const t = useT();
   const inputRef = useRef(null);
+  const displayLabel = label || t('fileUpload', 'defaultLabel');
 
   const handleFiles = async (selected) => {
     const tooBig = [...selected].filter((f) => f.size > maxMB * 1024 * 1024);
     if (tooBig.length) {
-      alert(`Some files exceed ${maxMB}MB limit and were skipped.`);
+      alert(`${t('fileUpload', 'tooLarge')} ${maxMB}MB ${t('fileUpload', 'tooLargeEnd')}`);
     }
     const valid = [...selected].filter((f) => f.size <= maxMB * 1024 * 1024);
     const encoded = await Promise.all(valid.map(toBase64));
@@ -39,9 +42,7 @@ export function FileUpload({ files = [], onChange, label = 'Attach Files', accep
     handleFiles(e.dataTransfer.files);
   };
 
-  const remove = (idx) => {
-    onChange(files.filter((_, i) => i !== idx));
-  };
+  const remove = (idx) => onChange(files.filter((_, i) => i !== idx));
 
   return (
     <div className="space-y-2">
@@ -52,8 +53,10 @@ export function FileUpload({ files = [], onChange, label = 'Attach Files', accep
         onDragOver={(e) => e.preventDefault()}
       >
         <Paperclip className="w-5 h-5 mx-auto text-gray-400 mb-1" />
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-xs text-gray-400 mt-0.5">Drag & drop or click — max {maxMB}MB each</p>
+        <p className="text-sm text-gray-500">{displayLabel}</p>
+        <p className="text-xs text-gray-400 mt-0.5">
+          {t('fileUpload', 'hint')} {maxMB}{t('fileUpload', 'hintUnit')}
+        </p>
       </div>
       <input ref={inputRef} type="file" multiple accept={accept} className="hidden" onChange={(e) => handleFiles(e.target.files)} />
       {files.length > 0 && (
@@ -75,7 +78,7 @@ export function FileUpload({ files = [], onChange, label = 'Attach Files', accep
 }
 
 export function FileList({ files = [], title }) {
-  if (!files.length) return <p className="text-sm text-gray-400 italic">No attachments</p>;
+  if (!files.length) return null;
   return (
     <div className="space-y-1">
       {title && <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>}
