@@ -193,6 +193,39 @@ export function CARProvider({ children }) {
     }));
   }, [currentUserName]);
 
+  const updateCAR = useCallback((carId, formData) => {
+    setData((prev) => ({
+      ...prev,
+      cars: prev.cars.map((c) => {
+        if (c.id !== carId) return c;
+        const updated = {
+          ...c,
+          title:              formData.title,
+          carType:            formData.carType,
+          priority:           formData.priority,
+          findingNarrative:   formData.findingNarrative,
+          findingLocation:    formData.findingLocation,
+          incidentDate:       formData.incidentDate,
+          referenceNumber:    formData.referenceNumber,
+          dueDate:            formData.dueDate,
+          findingAttachments: formData.findingAttachments || [],
+          // Responsible party — array + backward-compat single fields
+          responsibleUsers:        formData.responsibleUsers        || [],
+          responsibleUserId:       formData.responsibleUsers?.[0]?.id || formData.responsibleUserId || null,
+          responsiblePerson:       formData.responsibleUsers?.[0]?.name || formData.responsiblePerson,
+          responsibleOrgType:      formData.responsibleUsers?.[0]?.orgType      || formData.responsibleOrgType      || '',
+          responsibleOrgName:      formData.responsibleUsers?.[0]?.orgName      || formData.responsibleOrgName      || '',
+          responsibleOrganization: formData.responsibleUsers?.[0]?.orgName      || formData.responsibleOrganization || '',
+          responsibleDepartment:   formData.responsibleUsers?.[0]?.department   || formData.responsibleDepartment   || '',
+          responsiblePosition:     formData.responsibleUsers?.[0]?.position     || formData.responsiblePosition     || '',
+          responsibleEmail:        formData.responsibleUsers?.[0]?.email        || formData.responsibleEmail,
+          responsibleContactNumber:formData.responsibleUsers?.[0]?.contactNumber|| formData.responsibleContactNumber|| '',
+        };
+        return addAuditEntry(updated, 'CAR Updated', currentUserName, `Updated by ${currentUserName}`);
+      }),
+    }));
+  }, [currentUserName]);
+
   const deleteCAR = useCallback((carId) => {
     setData((prev) => ({ ...prev, cars: prev.cars.filter((c) => c.id !== carId) }));
   }, []);
@@ -203,6 +236,7 @@ export function CARProvider({ children }) {
       role,
       currentUser: currentUserName,  // keep as string for backward compat
       createCAR,
+      updateCAR,
       issueCAR,
       submitRCA,
       reviewCAP,

@@ -80,6 +80,10 @@ export const translations = {
       btnCancel: 'Cancel',
       btnDraft: 'Save as Draft',
       btnIssue: 'Issue CAR to Stakeholder',
+      editPageTitle: 'Edit CAR',
+      editPageSubtitle: 'Update finding details and responsible party',
+      btnSaveChanges: 'Save Changes',
+      btnSaveAndIssue: 'Save & Issue',
     },
 
     // ── CAR Detail ────────────────────────────────────────────────
@@ -161,8 +165,9 @@ export const translations = {
       waitAction: 'Available once final action evidence is submitted.',
       waitApproval: 'Awaiting CAP approval before final action submission.',
 
-      // Issue button
+      // Issue / edit / delete buttons
       btnIssue: 'Issue',
+      btnEdit: 'Edit',
       btnDelete: 'Delete',
       confirmDelete: 'Delete',
       deleteMsg: '? This cannot be undone.',
@@ -374,6 +379,10 @@ export const translations = {
       btnCancel: 'ยกเลิก',
       btnDraft: 'บันทึกเป็นร่าง',
       btnIssue: 'ออก CAR ให้ผู้มีส่วนได้ส่วนเสีย',
+      editPageTitle: 'แก้ไข CAR',
+      editPageSubtitle: 'อัปเดตรายละเอียดข้อค้นพบและผู้รับผิดชอบ',
+      btnSaveChanges: 'บันทึกการเปลี่ยนแปลง',
+      btnSaveAndIssue: 'บันทึกและออก CAR',
     },
 
     detail: {
@@ -450,6 +459,7 @@ export const translations = {
       waitApproval: 'รอการอนุมัติแผนการแก้ไขก่อนส่งหลักฐาน',
 
       btnIssue: 'ออก CAR',
+      btnEdit: 'แก้ไข',
       btnDelete: 'ลบ',
       confirmDelete: 'ลบ',
       deleteMsg: '? ไม่สามารถยกเลิกได้',

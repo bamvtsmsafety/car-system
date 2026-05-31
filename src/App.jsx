@@ -6,6 +6,7 @@ import { Header } from './components/Header';
 import { LoginPage } from './pages/LoginPage';
 import { Dashboard } from './pages/Dashboard';
 import { CreateCAR } from './pages/CreateCAR';
+import { EditCAR } from './pages/EditCAR';
 import { CARDetail } from './pages/CARDetail';
 import { UserManagement } from './pages/UserManagement';
 
@@ -40,6 +41,7 @@ function AppInner() {
         <main className="py-2">
           {page === 'dashboard' && <Dashboard onNavigate={navigate} />}
           {page === 'create'    && <CreateCAR onNavigate={navigate} />}
+          {page === 'edit'      && <EditCAR carId={selectedCarId} onNavigate={navigate} />}
           {page === 'detail'    && <CARDetail carId={selectedCarId} onNavigate={navigate} />}
           {page === 'users'     && <UserManagement onNavigate={navigate} />}
         </main>

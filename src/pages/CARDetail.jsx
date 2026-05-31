@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import {
   ArrowLeft, Send, CheckCircle2, XCircle, Lock, AlertTriangle,
   ClipboardList, User, Calendar, MapPin, Hash, Building2,
-  History, ChevronDown, ChevronUp, Trash2, Briefcase, Phone, Layers
+  History, ChevronDown, ChevronUp, Trash2, Briefcase, Phone, Layers, Pencil
 } from 'lucide-react';
 import { useCARContext } from '../context/CARContext';
 import { useT } from '../context/LanguageContext';
@@ -405,17 +405,34 @@ export function CARDetail({ carId, onNavigate }) {
           </div>
           <h1 className="text-xl font-bold text-gray-900">{car.title}</h1>
         </div>
-        {isSafety && car.status === CAR_STATUS.DRAFT && (
+        {isSafety && [CAR_STATUS.DRAFT, CAR_STATUS.ISSUED, CAR_STATUS.RCA_REJECTED].includes(car.status) && (
           <div className="flex gap-2 shrink-0">
+            {/* Edit — available for DRAFT, ISSUED, RCA_REJECTED */}
             <button
-              onClick={() => { issueCAR(car.id); }}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+              onClick={() => onNavigate('edit', car.id)}
+              className="flex items-center gap-1.5 border border-gray-200 text-gray-600 hover:text-slate-800 hover:bg-slate-50 hover:border-slate-300 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
             >
-              <Send className="w-3.5 h-3.5" /> {t('detail', 'btnIssue')}
+              <Pencil className="w-3.5 h-3.5" /> {t('detail', 'btnEdit')}
             </button>
-            <button onClick={handleDelete} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {/* Issue — DRAFT only */}
+            {car.status === CAR_STATUS.DRAFT && (
+              <button
+                onClick={() => issueCAR(car.id)}
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Send className="w-3.5 h-3.5" /> {t('detail', 'btnIssue')}
+              </button>
+            )}
+            {/* Delete — DRAFT only */}
+            {car.status === CAR_STATUS.DRAFT && (
+              <button
+                onClick={handleDelete}
+                className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                title={t('detail', 'btnDelete')}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
       </div>
