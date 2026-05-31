@@ -9,13 +9,13 @@ const AuthContext = createContext(null);
 
 // ── Default seed accounts (created on first launch) ───────────────────────────
 const SEED_USERS = [
-  { username: 'admin',      password: 'admin123',   name: 'System Administrator', email: 'admin@airport.com',     role: 'admin',          organization: 'Administration' },
-  { username: 'safety1',    password: 'safety123',  name: 'Safety Officer',       email: 'safety@airport.com',    role: 'safety_officer', organization: 'Safety Department' },
-  { username: 'inspector1', password: 'inspect123', name: 'Safety Inspector',     email: 'inspector@airport.com', role: 'inspector',      organization: 'Safety Department' },
-  { username: 'auditor1',   password: 'audit123',   name: 'Quality Auditor',      email: 'auditor@airport.com',   role: 'inspector',      organization: 'Safety Department' },
-  { username: 'stake1',     password: 'stake123',   name: 'Airside Ops Manager',  email: 'airside@airport.com',   role: 'stakeholder',    organization: 'Airside Operations' },
-  { username: 'stake2',     password: 'stake123',   name: 'Ground Handling Mgr',  email: 'ground@airport.com',    role: 'stakeholder',    organization: 'Ground Handling' },
-  { username: 'stake3',     password: 'stake123',   name: 'Terminal Ops Manager', email: 'terminal@airport.com',  role: 'stakeholder',    organization: 'Terminal Operations' },
+  { username: 'admin',      password: 'admin123',   name: 'System Administrator', email: 'admin@airport.com',     role: 'admin',          organization: 'Administration',     orgType: 'Airport Department',        orgName: 'Administration',         department: 'IT / Administration', position: 'System Administrator', contactNumber: '' },
+  { username: 'safety1',    password: 'safety123',  name: 'Safety Officer',       email: 'safety@airport.com',    role: 'safety_officer', organization: 'Safety Department',  orgType: 'Airport Department',        orgName: 'AOT Safety Department',  department: 'Safety Management',   position: 'Safety Officer',       contactNumber: '' },
+  { username: 'inspector1', password: 'inspect123', name: 'Safety Inspector',     email: 'inspector@airport.com', role: 'inspector',      organization: 'Safety Department',  orgType: 'Airport Department',        orgName: 'AOT Safety Department',  department: 'Safety Inspection',   position: 'Safety Inspector',     contactNumber: '' },
+  { username: 'auditor1',   password: 'audit123',   name: 'Quality Auditor',      email: 'auditor@airport.com',   role: 'inspector',      organization: 'Safety Department',  orgType: 'Airport Department',        orgName: 'AOT Safety Department',  department: 'Quality Assurance',   position: 'Quality Auditor',      contactNumber: '' },
+  { username: 'stake1',     password: 'stake123',   name: 'Airside Ops Manager',  email: 'airside@airport.com',   role: 'stakeholder',    organization: 'Airside Operations', orgType: 'Airport Department',        orgName: 'Airside Operations Dept',department: 'Operations',          position: 'Operations Manager',   contactNumber: '' },
+  { username: 'stake2',     password: 'stake123',   name: 'Ground Handling Mgr',  email: 'ground@airport.com',    role: 'stakeholder',    organization: 'Ground Handling',    orgType: 'Ground Handling Company',   orgName: 'Ground Handling Dept',   department: 'Ramp Services',       position: 'Department Manager',   contactNumber: '' },
+  { username: 'stake3',     password: 'stake123',   name: 'Terminal Ops Manager', email: 'terminal@airport.com',  role: 'stakeholder',    organization: 'Terminal Operations', orgType: 'Terminal Operations',      orgName: 'Terminal Operations Dept',department: 'Passenger Services',  position: 'Operations Manager',   contactNumber: '' },
 ];
 
 export function AuthProvider({ children }) {
@@ -38,7 +38,12 @@ export function AuthProvider({ children }) {
             name: u.name,
             email: u.email,
             role: u.role,
-            organization: u.organization,
+            organization: u.orgName || u.organization,
+            orgType:       u.orgType       || '',
+            orgName:       u.orgName       || u.organization,
+            department:    u.department    || '',
+            position:      u.position      || '',
+            contactNumber: u.contactNumber || '',
             isActive: true,
             createdAt: new Date().toISOString(),
           });
@@ -92,11 +97,12 @@ export function AuthProvider({ children }) {
     setUsers(data.users || []);
   }, []);
 
-  const createUser = useCallback(async ({ username, password, name, email, role, organization }) => {
+  const createUser = useCallback(async ({ username, password, name, email, role, organization, orgType, orgName, department, position, contactNumber }) => {
     const data = loadData();
     if (data.users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
       return { success: false, error: 'usernameTaken' };
     }
+    const resolvedOrg = (orgName || organization || '').trim();
     const newUser = {
       id: uuid(),
       username: username.trim(),
@@ -104,7 +110,12 @@ export function AuthProvider({ children }) {
       name: name.trim(),
       email: email.trim(),
       role,
-      organization: organization.trim(),
+      organization:  resolvedOrg,
+      orgType:       (orgType       || '').trim(),
+      orgName:       resolvedOrg,
+      department:    (department    || '').trim(),
+      position:      (position      || '').trim(),
+      contactNumber: (contactNumber || '').trim(),
       isActive: true,
       createdAt: new Date().toISOString(),
     };

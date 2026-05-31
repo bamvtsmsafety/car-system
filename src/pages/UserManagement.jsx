@@ -5,7 +5,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../context/LanguageContext';
 import { ROLES, ROLE_COLORS } from '../utils/auth';
-import { STAKEHOLDER_ORG } from '../utils/constants';
+import { ORG_TYPES } from '../utils/constants';
 
 const ROLE_KEYS = Object.keys(ROLES);
 
@@ -24,13 +24,17 @@ function RoleBadge({ role }) {
 function UserForm({ initial, isEdit, onSave, onCancel }) {
   const t = useT();
   const [form, setForm] = useState({
-    name: initial?.name || '',
-    username: initial?.username || '',
-    password: '',
-    email: initial?.email || '',
-    role: initial?.role || 'stakeholder',
-    organization: initial?.organization || STAKEHOLDER_ORG[0],
-    isActive: initial?.isActive ?? true,
+    name:          initial?.name          || '',
+    username:      initial?.username      || '',
+    password:      '',
+    email:         initial?.email         || '',
+    role:          initial?.role          || 'stakeholder',
+    orgType:       initial?.orgType       || '',
+    orgName:       initial?.orgName       || initial?.organization || '',
+    department:    initial?.department    || '',
+    position:      initial?.position      || '',
+    contactNumber: initial?.contactNumber || '',
+    isActive:      initial?.isActive      ?? true,
   });
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
@@ -95,13 +99,38 @@ function UserForm({ initial, isEdit, onSave, onCancel }) {
             ))}
           </select>
         </div>
+        {/* ── Organization fields ───────────────────────────────── */}
+        <div className="sm:col-span-2 pt-1 border-t border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+            {t('users', 'fieldOrg')}
+          </p>
+        </div>
         <div>
-          <label className={lbl}>{t('users', 'fieldOrg')}</label>
-          <select value={form.organization} onChange={set('organization')} className={inp}>
-            {STAKEHOLDER_ORG.map((o) => <option key={o}>{o}</option>)}
-            <option value="Safety Department">Safety Department</option>
-            <option value="Administration">Administration</option>
+          <label className={lbl}>{t('users', 'fieldOrgType')}</label>
+          <select value={form.orgType} onChange={set('orgType')} className={inp}>
+            <option value="">—</option>
+            {ORG_TYPES.map((o) => <option key={o}>{o}</option>)}
           </select>
+        </div>
+        <div>
+          <label className={lbl}>{t('users', 'fieldOrgName')}</label>
+          <input type="text" value={form.orgName} onChange={set('orgName')}
+            placeholder="e.g. Airports of Thailand PCL" className={inp} />
+        </div>
+        <div>
+          <label className={lbl}>{t('users', 'fieldDept')}</label>
+          <input type="text" value={form.department} onChange={set('department')}
+            placeholder="e.g. Airside Operations" className={inp} />
+        </div>
+        <div>
+          <label className={lbl}>{t('users', 'fieldPosition')}</label>
+          <input type="text" value={form.position} onChange={set('position')}
+            placeholder="e.g. Operations Manager" className={inp} />
+        </div>
+        <div>
+          <label className={lbl}>{t('users', 'fieldContact')}</label>
+          <input type="text" value={form.contactNumber} onChange={set('contactNumber')}
+            placeholder="e.g. +66-2-535-1111" className={inp} />
         </div>
         {isEdit && (
           <div className="sm:col-span-2 flex items-center gap-2">
@@ -142,7 +171,7 @@ export function UserManagement({ onNavigate }) {
   };
 
   const handleEdit = async (form) => {
-    const changes = { ...form };
+    const changes = { ...form, organization: form.orgName || form.organization };
     if (!changes.password) delete changes.password;
     const result = await updateUser(editTarget.id, changes);
     if (result.success) setEditTarget(null);

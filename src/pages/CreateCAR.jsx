@@ -38,10 +38,15 @@ export function CreateCAR({ onNavigate }) {
     incidentDate: today(),
     findingLocation: '',
     findingNarrative: '',
-    responsibleUserId: '',   // id of selected user, or '' for manual
-    responsiblePerson: '',
-    responsibleOrganization: STAKEHOLDER_ORG[0],
-    responsibleEmail: '',
+    responsibleUserId:      '',
+    responsiblePerson:      '',
+    responsibleOrgType:     '',
+    responsibleOrgName:     '',
+    responsibleOrganization:'',
+    responsibleDepartment:  '',
+    responsiblePosition:    '',
+    responsibleEmail:       '',
+    responsibleContactNumber:'',
     dueDate: thirtyDaysLater(),
     findingAttachments: [],
   });
@@ -54,17 +59,27 @@ export function CreateCAR({ onNavigate }) {
   const handleUserSelect = (e) => {
     const uid = e.target.value;
     if (!uid) {
-      // "manual" option
-      setForm((p) => ({ ...p, responsibleUserId: '', responsiblePerson: '', responsibleOrganization: STAKEHOLDER_ORG[0], responsibleEmail: '' }));
+      setForm((p) => ({
+        ...p,
+        responsibleUserId: '', responsiblePerson: '',
+        responsibleOrgType: '', responsibleOrgName: '', responsibleOrganization: '',
+        responsibleDepartment: '', responsiblePosition: '',
+        responsibleEmail: '', responsibleContactNumber: '',
+      }));
     } else {
       const user = stakeholderUsers.find((u) => u.id === uid);
       if (user) {
         setForm((p) => ({
           ...p,
-          responsibleUserId: uid,
-          responsiblePerson: user.name,
-          responsibleOrganization: user.organization,
-          responsibleEmail: user.email,
+          responsibleUserId:       uid,
+          responsiblePerson:       user.name,
+          responsibleOrgType:      user.orgType       || '',
+          responsibleOrgName:      user.orgName       || user.organization,
+          responsibleOrganization: user.orgName       || user.organization,
+          responsibleDepartment:   user.department    || '',
+          responsiblePosition:     user.position      || '',
+          responsibleEmail:        user.email,
+          responsibleContactNumber:user.contactNumber || '',
         }));
       }
     }

@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import {
   ArrowLeft, Send, CheckCircle2, XCircle, Lock, AlertTriangle,
   ClipboardList, User, Calendar, MapPin, Hash, Building2,
-  History, ChevronDown, ChevronUp, Trash2
+  History, ChevronDown, ChevronUp, Trash2, Briefcase, Phone, Layers
 } from 'lucide-react';
 import { useCARContext } from '../context/CARContext';
 import { useT } from '../context/LanguageContext';
@@ -445,10 +445,14 @@ export function CARDetail({ carId, onNavigate }) {
       {/* Responsible Party */}
       <Section title={t('detail', 'sec2')} color="bg-amber-600">
         <div className="grid sm:grid-cols-2 gap-4">
-          <InfoRow icon={User} label={t('detail', 'fieldPerson')} value={car.responsiblePerson} />
-          <InfoRow icon={Building2} label={t('detail', 'fieldOrg')} value={car.responsibleOrganization} />
-          <InfoRow icon={User} label={t('detail', 'fieldEmail')} value={car.responsibleEmail || '—'} />
-          <InfoRow icon={User} label={t('detail', 'fieldIssuedBy')} value={car.issuedBy} />
+          <InfoRow icon={User}      label={t('detail', 'fieldPerson')}   value={car.responsiblePerson} />
+          <InfoRow icon={Briefcase} label={t('detail', 'fieldPosition')}  value={car.responsiblePosition} />
+          <InfoRow icon={Layers}    label={t('detail', 'fieldOrgType')}   value={car.responsibleOrgType} />
+          <InfoRow icon={Building2} label={t('detail', 'fieldOrg')}       value={car.responsibleOrgName || car.responsibleOrganization} />
+          <InfoRow icon={Hash}      label={t('detail', 'fieldDept')}      value={car.responsibleDepartment} />
+          <InfoRow icon={User}      label={t('detail', 'fieldEmail')}     value={car.responsibleEmail || '—'} />
+          <InfoRow icon={Phone}     label={t('detail', 'fieldContact')}   value={car.responsibleContactNumber} />
+          <InfoRow icon={User}      label={t('detail', 'fieldIssuedBy')}  value={car.issuedBy} />
         </div>
       </Section>
 

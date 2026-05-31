@@ -45,6 +45,23 @@ export const CAR_TYPES = [
 
 export const PRIORITY_LEVELS = ['Critical', 'High', 'Medium', 'Low'];
 
+export const ORG_TYPES = [
+  'Airport Department',
+  'Airline',
+  'Ground Handling Company',
+  'Terminal Operations',
+  'Engineering & Maintenance',
+  'Security Company',
+  'Fire & Rescue Service',
+  'Air Traffic Control',
+  'Cargo Operations',
+  'Fuel Service',
+  'Government / Regulatory Agency',
+  'Contractor / Service Provider',
+  'Concessions',
+  'Other',
+];
+
 export const STAKEHOLDER_ORG = [
   'Airside Operations',
   'Ground Handling',
